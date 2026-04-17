@@ -25,7 +25,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# dataset (too large for GitHub — download separately)
+dataset/
+
 # local env files
+.env
 .env*.local
 
 # vercel
