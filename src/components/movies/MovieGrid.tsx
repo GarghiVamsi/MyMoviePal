@@ -19,7 +19,7 @@ export function MovieGrid({ movies }: MovieGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+    <div className="flex flex-col gap-4">
       {movies.map((movie) => (
         <MovieCard
           key={movie.id}
@@ -28,6 +28,7 @@ export function MovieGrid({ movies }: MovieGridProps) {
           year={movie.year}
           posterUrl={movie.posterUrl}
           genres={movie.genres}
+          overview={movie.overview ?? ""}
           avgScore={movie._avg.score}
           ratingCount={movie._count.ratings}
           mlAvgScore={movie.mlAvgScore}
