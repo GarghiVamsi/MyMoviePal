@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { StarRating } from "@/components/ui/StarRating";
 import { RatingForm } from "@/components/movies/RatingForm";
 import { RatingsList } from "@/components/movies/RatingsList";
-import { formatRuntime, formatScore } from "@/lib/utils";
+import { formatRuntime, formatScore, formatTitle } from "@/lib/utils";
 import type { Metadata } from "next";
 
 interface PageProps {
@@ -18,7 +18,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const movie = await prisma.movie.findUnique({ where: { id: params.id } });
   if (!movie) return { title: "Not Found" };
-  return { title: `${movie.title} (${movie.year}) — MyMoviePal` };
+  return { title: `${formatTitle(movie.title)} (${movie.year}) — MyMoviePal` };
 }
 
 export default async function MovieDetailPage({ params }: PageProps) {
@@ -83,7 +83,7 @@ export default async function MovieDetailPage({ params }: PageProps) {
         {/* Info */}
         <div className="flex-1 space-y-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-100">{movie.title}</h1>
+            <h1 className="text-3xl font-bold text-gray-100">{formatTitle(movie.title)}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-gray-500">
               <span>{movie.year}</span>
               {movie.runtime && <span>{formatRuntime(movie.runtime)}</span>}
