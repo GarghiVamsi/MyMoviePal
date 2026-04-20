@@ -38,3 +38,6 @@ dataset/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+#claude files
+CLAUDE.md
