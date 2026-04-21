@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { StarRating } from "@/components/ui/StarRating";
 import { RatingForm } from "@/components/movies/RatingForm";
 import { RatingsList } from "@/components/movies/RatingsList";
+import { Rating } from "@/types";
 import { formatRuntime, formatScore, formatTitle } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -160,7 +161,7 @@ export default async function MovieDetailPage({ params }: PageProps) {
           <h2 className="text-lg font-semibold text-gray-100 mb-4">
             All Reviews <span className="text-gray-600 font-normal">({movie._count.ratings})</span>
           </h2>
-          <RatingsList ratings={movie.ratings as any} />
+          <RatingsList ratings={movie.ratings as Rating[]} />
         </div>
       </div>
     </div>
