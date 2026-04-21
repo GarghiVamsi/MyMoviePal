@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MyMoviePal
+
+A full-stack movie discovery and rating platform powered by the MovieLens 32M dataset (87,000+ movies), enriched with TMDB posters and metadata.
+
+## Features
+
+- **Browse & search** 87k+ movies with genre, year, and sort filters
+- **Movie detail pages** with poster, overview, cast, director, runtime, and genre badges
+- **Dual scores** — community MovieLens average alongside user ratings
+- **Rate & review** any movie with a 1–10 star rating and optional text review
+- **User accounts** — register, log in, and view your full ratings history on your profile
+- **Surprise Me** — random movie discovery button
+- **Correct title formatting** — MovieLens-format titles (e.g. "Ring, The") are displayed correctly ("The Ring")
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 14 (App Router) |
+| Language | TypeScript |
+| Database | PostgreSQL on Supabase |
+| ORM | Prisma 5 |
+| Auth | NextAuth v4 (JWT, credentials) |
+| Styling | Tailwind CSS |
+| Validation | Zod v4 + React Hook Form |
+| Image optimisation | Sharp + Next.js Image |
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- A Supabase account (or access to the shared project credentials)
+- A [TMDB API key](https://www.themoviedb.org/settings/api) (free)
+
+### Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/GarghiVamsi/MyMoviePal.git
+cd MyMoviePal
+npm install
+cp .env.example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Fill in `.env` with your credentials:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+DATABASE_URL="postgresql://postgres.[project-ref]:[password]@aws-1-[region].pooler.supabase.com:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres?sslmode=require"
+TMDB_API_KEY=""
+NEXTAUTH_SECRET=""   # generate with: openssl rand -base64 32
+NEXTAUTH_URL="http://localhost:3000"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npx prisma generate   # generate Prisma client from schema
+npm run dev           # start dev server at http://localhost:3000
+```
 
-## Learn More
+> The database (87k+ movies with posters) is already live on Supabase — no migrations or seeding needed.
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/
+├── app/
+│   ├── (auth)/login & register    # Auth pages
+│   ├── api/                       # REST API routes
+│   ├── movies/[id]/               # Movie detail page
+│   ├── movies/                    # Browse/search page
+│   ├── profile/                   # User ratings history
+│   └── layout.tsx                 # Root layout
+├── components/
+│   ├── auth/                      # LoginForm, RegisterForm
+│   ├── layout/                    # Navbar
+│   ├── movies/                    # MovieCard, MovieGrid, RatingForm, RatingsList
+│   └── ui/                        # Badge, Button, Input, StarRating, Spinner
+├── lib/
+│   ├── auth.ts                    # NextAuth config
+│   ├── prisma.ts                  # Prisma singleton
+│   ├── utils.ts                   # formatTitle, formatScore, cn helpers
+│   └── validations.ts             # Zod schemas
+└── types/                         # Shared TypeScript types
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Architecture
 
-## Deploy on Vercel
+- **Server Components** fetch data directly via Prisma — no redundant API calls
+- **Client Components** interact with `/api/` routes for mutations (ratings, auth)
+- `DATABASE_URL` uses the Supabase connection pooler (port 6543) for runtime
+- `DIRECT_URL` uses the direct Supabase connection (port 5432) for `prisma migrate` only
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This app is designed to deploy on [Vercel](https://vercel.com). Set the following environment variables in your Vercel project dashboard:
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | Supabase pooler URL |
+| `DIRECT_URL` | Supabase direct URL |
+| `TMDB_API_KEY` | Your TMDB API key |
+| `NEXTAUTH_SECRET` | Random secret (`openssl rand -base64 32`) |
+| `NEXTAUTH_URL` | Your Vercel deployment URL (e.g. `https://mymoviepal.vercel.app`) |
