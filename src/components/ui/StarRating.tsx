@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface StarRatingProps {
   value: number;
-  onChange: (val: number) => void;
+  onChange?: (val: number) => void;
   max?: number;
   readonly?: boolean;
   size?: "sm" | "md" | "lg";
@@ -32,7 +32,7 @@ export function StarRating({
             key={n}
             type="button"
             disabled={readonly}
-            onClick={() => !readonly && onChange(n)}
+            onClick={() => !readonly && onChange?.(n)}
             onMouseEnter={() => !readonly && setHovered(n)}
             onMouseLeave={() => !readonly && setHovered(0)}
             className={cn(
