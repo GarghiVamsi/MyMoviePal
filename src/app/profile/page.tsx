@@ -61,7 +61,7 @@ export default async function ProfilePage() {
                 </div>
               </div>
               <div className="shrink-0 text-right">
-                <StarRating value={r.score} onChange={() => {}} readonly size="sm" />
+                <StarRating value={r.score} readonly size="sm" />
                 {r.review && (
                   <p className="text-xs text-gray-500 mt-1 max-w-[200px] truncate">{r.review}</p>
                 )}

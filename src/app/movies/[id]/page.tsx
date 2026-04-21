@@ -109,7 +109,7 @@ export default async function MovieDetailPage({ params }: PageProps) {
                 </p>
               </div>
               {avgScore != null && (
-                <StarRating value={Math.round(avgScore)} onChange={() => {}} readonly size="sm" />
+                <StarRating value={Math.round(avgScore)} readonly size="sm" />
               )}
             </div>
             {/* MovieLens community score */}

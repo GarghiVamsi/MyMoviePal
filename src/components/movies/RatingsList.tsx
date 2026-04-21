@@ -23,7 +23,7 @@ export function RatingsList({ ratings }: RatingsListProps) {
               <p className="font-medium text-gray-200 text-sm">
                 {r.user.name ?? r.user.email.split("@")[0]}
               </p>
-              <StarRating value={r.score} onChange={() => {}} readonly size="sm" />
+              <StarRating value={r.score} readonly size="sm" />
             </div>
             <time className="text-xs text-gray-600 shrink-0">
               {new Date(r.createdAt).toLocaleDateString("en-US", {
