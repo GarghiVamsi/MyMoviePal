@@ -25,9 +25,14 @@ export function Navbar() {
             Browse
           </Link>
           {session && (
-            <Link href="/profile" className="px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-gray-100 hover:bg-gray-800 transition-colors">
-              My Ratings
-            </Link>
+            <>
+              <Link href="/profile" className="px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-gray-100 hover:bg-gray-800 transition-colors">
+                My Ratings
+              </Link>
+              <Link href="/watchlist" className="px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-gray-100 hover:bg-gray-800 transition-colors">
+                Watchlist
+              </Link>
+            </>
           )}
           <div className="ml-2 flex items-center gap-2">
             {session ? (
@@ -77,9 +82,14 @@ export function Navbar() {
             Browse Movies
           </Link>
           {session && (
-            <Link href="/profile" onClick={() => setMenuOpen(false)} className="py-2 text-sm text-gray-300 hover:text-amber-400">
-              My Ratings
-            </Link>
+            <>
+              <Link href="/profile" onClick={() => setMenuOpen(false)} className="py-2 text-sm text-gray-300 hover:text-amber-400">
+                My Ratings
+              </Link>
+              <Link href="/watchlist" onClick={() => setMenuOpen(false)} className="py-2 text-sm text-gray-300 hover:text-amber-400">
+                Watchlist
+              </Link>
+            </>
           )}
           <div className="pt-2 border-t border-gray-800 mt-1 flex flex-col gap-2">
             {session ? (

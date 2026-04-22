@@ -10,6 +10,7 @@ import { RatingForm } from "@/components/movies/RatingForm";
 import { RatingsList } from "@/components/movies/RatingsList";
 import { Rating } from "@/types";
 import { formatRuntime, formatScore, formatTitle } from "@/lib/utils";
+import { WatchlistButton } from "@/components/movies/WatchlistButton";
 import type { Metadata } from "next";
 
 interface PageProps {
@@ -46,6 +47,12 @@ export default async function MovieDetailPage({ params }: PageProps) {
   const userRating = session
     ? movie.ratings.find((r: { userId: string }) => r.userId === session!.user.id) ?? null
     : null;
+
+  const isWatchlisted = session
+    ? !!(await prisma.watchlist.findUnique({
+        where: { userId_movieId: { userId: session.user.id, movieId: movie.id } },
+      }))
+    : false;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
@@ -85,10 +92,17 @@ export default async function MovieDetailPage({ params }: PageProps) {
         <div className="flex-1 space-y-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-100">{formatTitle(movie.title)}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-gray-500">
+            <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-gray-400">
               <span>{movie.year}</span>
-              {movie.runtime && <span>{formatRuntime(movie.runtime)}</span>}
-              {movie.director && <span>Directed by <span className="text-gray-400">{movie.director}</span></span>}
+              {movie.contentType === "anime" && movie.episodeCount
+                ? <span>{movie.episodeCount} episodes</span>
+                : movie.runtime ? <span>{formatRuntime(movie.runtime)}</span> : null}
+              {movie.contentType !== "anime" && movie.director && (
+                <span>Directed by <span className="text-gray-300">{movie.director}</span></span>
+              )}
+              {movie.contentType === "anime" && (
+                <span className="inline-flex items-center rounded-full bg-violet-500/20 text-violet-300 px-2.5 py-0.5 text-xs font-medium">Anime</span>
+              )}
             </div>
           </div>
 
@@ -112,18 +126,22 @@ export default async function MovieDetailPage({ params }: PageProps) {
                 <StarRating value={Math.round(avgScore)} readonly size="sm" />
               )}
             </div>
-            {/* MovieLens community score */}
+            {/* Community / AniList score */}
             {movie.mlAvgScore != null && (
               <div className="flex items-center gap-3 py-3 px-4 rounded-xl bg-gray-900/60 border border-gray-800">
                 <div>
                   <p className="text-3xl font-bold text-blue-400">{formatScore(movie.mlAvgScore)}</p>
-                  <p className="text-xs text-gray-500">
-                    {movie.mlRatingCount?.toLocaleString()} MovieLens ratings
+                  <p className="text-xs text-gray-400">
+                    {(movie as { contentType?: string }).contentType === "anime"
+                      ? `AniList · ${movie.mlRatingCount?.toLocaleString()} votes`
+                      : `${movie.mlRatingCount?.toLocaleString()} community ratings`}
                   </p>
                 </div>
               </div>
             )}
           </div>
+
+          <WatchlistButton movieId={movie.id} initialSaved={isWatchlisted} />
 
           {movie.overview && (
             <p className="text-gray-400 leading-relaxed text-sm">{movie.overview}</p>

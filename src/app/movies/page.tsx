@@ -9,7 +9,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = { title: "Browse Movies — MyMoviePal" };
 
 interface PageProps {
-  searchParams: { q?: string; genre?: string; year?: string; page?: string; sort?: string };
+  searchParams: { q?: string; genre?: string; year?: string; page?: string; sort?: string; type?: string };
 }
 
 async function MovieResults({ searchParams }: PageProps) {
@@ -17,6 +17,7 @@ async function MovieResults({ searchParams }: PageProps) {
   const genre = searchParams.genre ?? "";
   const year = searchParams.year ? parseInt(searchParams.year) : undefined;
   const sort = searchParams.sort ?? "popular";
+  const type = searchParams.type ?? "";
   const page = Math.max(1, parseInt(searchParams.page ?? "1"));
   const limit = 20;
 
@@ -24,8 +25,9 @@ async function MovieResults({ searchParams }: PageProps) {
     ...(q && { title: { contains: q, mode: "insensitive" as const } }),
     ...(genre && { genres: { has: genre } }),
     ...(year && { year }),
-    // Only show movies that have ratings (have been seen) when browsing
-    ...(sort === "popular" && !q && !genre && !year && { mlRatingCount: { gt: 0 } }),
+    ...(type && { contentType: type }),
+    ...(sort === "popular" && { mlRatingCount: { gt: 0 } }),
+    ...(sort === "rating" && { mlAvgScore: { not: null } }),
   };
 
   const orderBy =
@@ -52,7 +54,7 @@ async function MovieResults({ searchParams }: PageProps) {
 
   return (
     <div>
-      <p className="text-sm text-gray-500 mb-5">
+      <p className="text-sm text-gray-400 mb-5">
         {total} {total === 1 ? "movie" : "movies"} found
       </p>
       <MovieGrid movies={moviesWithStats} />
