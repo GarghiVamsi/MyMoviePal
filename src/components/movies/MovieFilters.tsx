@@ -40,30 +40,51 @@ export function MovieFilters() {
           className="h-11"
         />
       </div>
+      <label htmlFor="type-filter" className="sr-only">Content type</label>
       <select
+        id="type-filter"
+        value={searchParams.get("type") ?? ""}
+        onChange={(e) => update("type", e.target.value)}
+        className={SELECT_CLASS}
+        aria-label="Filter by content type"
+      >
+        <option value="">All</option>
+        <option value="movie">Movies</option>
+        <option value="anime">Anime</option>
+      </select>
+      <label htmlFor="genre-filter" className="sr-only">Genre</label>
+      <select
+        id="genre-filter"
         value={searchParams.get("genre") ?? ""}
         onChange={(e) => update("genre", e.target.value)}
         className={SELECT_CLASS}
+        aria-label="Filter by genre"
       >
         <option value="">All Genres</option>
         {GENRES.map((g) => (
           <option key={g} value={g}>{g}</option>
         ))}
       </select>
+      <label htmlFor="year-filter" className="sr-only">Year</label>
       <select
+        id="year-filter"
         value={searchParams.get("year") ?? ""}
         onChange={(e) => update("year", e.target.value)}
         className={SELECT_CLASS}
+        aria-label="Filter by year"
       >
         <option value="">All Years</option>
         {YEARS.map((y) => (
           <option key={y} value={y}>{y}</option>
         ))}
       </select>
+      <label htmlFor="sort-filter" className="sr-only">Sort by</label>
       <select
+        id="sort-filter"
         value={searchParams.get("sort") ?? "popular"}
         onChange={(e) => update("sort", e.target.value)}
         className={SELECT_CLASS}
+        aria-label="Sort movies"
       >
         <option value="popular">Most Popular</option>
         <option value="rating">Highest Rated</option>

@@ -26,14 +26,14 @@ export default async function ProfilePage() {
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-100">My Ratings</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-gray-400 mt-1">
           {session.user.name ?? session.user.email} · {ratings.length} {ratings.length === 1 ? "movie" : "movies"} rated
         </p>
       </div>
 
       {ratings.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-gray-500 mb-4">You haven&apos;t rated any movies yet.</p>
+          <p className="text-gray-400 mb-4">You haven&apos;t rated any movies yet.</p>
           <Link href="/movies" className="text-amber-400 hover:underline text-sm font-medium">
             Browse movies →
           </Link>
@@ -55,15 +55,15 @@ export default async function ProfilePage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-gray-100 truncate">{r.movie.title}</p>
-                <p className="text-xs text-gray-500">{r.movie.year}</p>
+                <p className="text-xs text-gray-400">{r.movie.year}</p>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {r.movie.genres.slice(0, 2).map((g: string) => <Badge key={g}>{g}</Badge>)}
                 </div>
               </div>
-              <div className="shrink-0 text-right">
+              <div className="shrink-0 text-right w-48">
                 <StarRating value={r.score} readonly size="sm" />
                 {r.review && (
-                  <p className="text-xs text-gray-500 mt-1 max-w-[200px] truncate">{r.review}</p>
+                  <p className="text-xs text-gray-400 mt-1 truncate">{r.review}</p>
                 )}
               </div>
             </Link>

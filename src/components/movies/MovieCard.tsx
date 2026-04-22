@@ -13,11 +13,16 @@ interface MovieCardProps {
   avgScore?: number | null;
   ratingCount?: number;
   mlAvgScore?: number | null;
+  contentType?: string;
+  episodeCount?: number | null;
+  runtime?: number | null;
 }
 
-export function MovieCard({ id, title, year, posterUrl, genres, overview, avgScore, ratingCount, mlAvgScore }: MovieCardProps) {
+export function MovieCard({ id, title, year, posterUrl, genres, overview, avgScore, ratingCount, mlAvgScore, contentType, episodeCount, runtime }: MovieCardProps) {
   const displayScore = avgScore ?? mlAvgScore;
   const scoreColor = avgScore != null ? "text-amber-400" : "text-blue-400";
+  const isAnime = contentType === "anime";
+  const scoreLabel = avgScore != null ? "User score" : isAnime ? "AniList score" : "Community";
 
   return (
     <Link href={`/movies/${id}`} className="group block">
@@ -45,10 +50,13 @@ export function MovieCard({ id, title, year, posterUrl, genres, overview, avgSco
         <div className="flex flex-1 gap-4 min-w-0">
           {/* Synopsis column */}
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-100 group-hover:text-amber-400 transition-colors leading-tight">
+            <h2 className="font-semibold text-gray-100 group-hover:text-amber-400 transition-colors leading-tight">
               {formatTitle(title)}
-            </h3>
-            <p className="text-xs text-gray-500 mt-0.5 mb-2">{year}</p>
+            </h2>
+            <p className="text-xs text-gray-400 mt-0.5 mb-2">
+              {year}
+              {isAnime && episodeCount ? ` · ${episodeCount} eps` : !isAnime && runtime ? ` · ${Math.floor(runtime / 60)}h ${runtime % 60}m` : ""}
+            </p>
             <div className="flex flex-wrap gap-1 mb-2">
               {genres.slice(0, 3).map((g) => (
                 <Badge key={g}>{g}</Badge>
@@ -69,15 +77,13 @@ export function MovieCard({ id, title, year, posterUrl, genres, overview, avgSco
                   </svg>
                   <span className={`text-lg font-bold ${scoreColor}`}>{formatScore(displayScore)}</span>
                 </div>
-                <p className="text-xs text-gray-500 text-center">
-                  {avgScore != null ? "User score" : "Community"}
-                </p>
+                <p className="text-xs text-gray-400 text-center">{scoreLabel}</p>
               </>
             ) : (
-              <p className="text-xs text-gray-600 text-center">No ratings yet</p>
+              <p className="text-xs text-gray-400 text-center">No ratings yet</p>
             )}
             {ratingCount != null && ratingCount > 0 && (
-              <p className="text-xs text-gray-600 text-center">{ratingCount} {ratingCount === 1 ? "rating" : "ratings"}</p>
+              <p className="text-xs text-gray-400 text-center">{ratingCount} {ratingCount === 1 ? "rating" : "ratings"}</p>
             )}
           </div>
         </div>

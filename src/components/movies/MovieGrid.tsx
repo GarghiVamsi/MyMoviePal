@@ -32,6 +32,9 @@ export function MovieGrid({ movies }: MovieGridProps) {
           avgScore={movie._avg.score}
           ratingCount={movie._count.ratings}
           mlAvgScore={movie.mlAvgScore}
+          contentType={movie.contentType}
+          episodeCount={movie.episodeCount}
+          runtime={movie.runtime}
         />
       ))}
     </div>

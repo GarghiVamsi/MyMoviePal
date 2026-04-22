@@ -11,6 +11,9 @@ export interface Movie {
   mlMovieId: number | null;
   mlAvgScore: number | null;
   mlRatingCount: number | null;
+  contentType: string;
+  episodeCount: number | null;
+  anilistId: number | null;
   createdAt: Date;
 }
 

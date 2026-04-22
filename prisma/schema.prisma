@@ -16,7 +16,8 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  ratings Rating[]
+  ratings   Rating[]
+  watchlist Watchlist[]
 
   @@map("users")
 }
@@ -35,14 +36,34 @@ model Movie {
   tmdbId          Int?
   mlAvgScore      Float?
   mlRatingCount   Int?
+  contentType     String   @default("movie")
+  episodeCount    Int?
+  anilistId       Int?     @unique
   createdAt       DateTime @default(now())
 
-  ratings Rating[]
+  ratings   Rating[]
+  watchlist Watchlist[]
 
   @@index([title])
   @@index([year])
   @@index([mlMovieId])
   @@map("movies")
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId  String
+  movieId String
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movie Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, movieId])
+  @@index([userId])
+  @@index([movieId])
+  @@map("watchlist")
 }
 
 model Rating {

@@ -12,7 +12,7 @@ export function RandomMovieButton() {
   async function handleClick() {
     setLoading(true);
     try {
-      const res = await fetch("/api/movies/random");
+      const res = await fetch("/api/movies/random", { cache: "no-store" });
       if (!res.ok) return;
       const movie = await res.json();
       router.push(`/movies/${movie.id}`);
