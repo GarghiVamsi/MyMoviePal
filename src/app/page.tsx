@@ -8,7 +8,13 @@ import type { Metadata } from "next";
 export const metadata: Metadata = { title: "MyMoviePal — Discover Movies & Anime" };
 
 async function fetchFeatured() {
-  const [hotAnime, recentMovie] = await Promise.all([
+  const [topContent, hotAnime, recentMovie] = await Promise.all([
+    prisma.movie.findMany({
+      where: { mlAvgScore: { not: null }, mlRatingCount: { gt: 100 }, posterUrl: { not: null } },
+      orderBy: { mlRatingCount: "desc" },
+      take: 4,
+      select: { id: true, title: true, year: true, posterUrl: true, mlAvgScore: true, genres: true, mlRatingCount: true },
+    }),
     prisma.movie.findFirst({
       where: { contentType: "anime", mlAvgScore: { not: null }, mlRatingCount: { gt: 0 }, posterUrl: { not: null } },
       orderBy: { mlRatingCount: "desc" },
@@ -20,89 +26,144 @@ async function fetchFeatured() {
       select: { id: true, title: true, year: true, posterUrl: true, mlAvgScore: true, genres: true },
     }),
   ]);
-  return { hotAnime, recentMovie };
+  return { topContent, hotAnime, recentMovie };
+}
+
+function fmtCount(n: number | null): string {
+  if (!n) return "—";
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${Math.round(n / 1_000)}K`;
+  return String(n);
 }
 
 export default async function HomePage() {
-  const { hotAnime, recentMovie } = await fetchFeatured();
-  const heroItem = recentMovie ?? hotAnime;
+  const { topContent, hotAnime, recentMovie } = await fetchFeatured();
+  const heroItem = recentMovie ?? hotAnime ?? topContent[0] ?? null;
 
   return (
     <div className="min-h-screen bg-gray-950">
 
       {/* ── HERO ── */}
-      <div className="relative h-[72vh] min-h-[520px] overflow-hidden">
+      <div className="relative h-[85vh] min-h-[580px] overflow-hidden">
         {heroItem?.posterUrl && (
-          <Image
-            src={heroItem.posterUrl}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover scale-110 blur-md"
-          />
+          <Image src={heroItem.posterUrl.replace("/t/p/w500", "/t/p/w1280")} alt="" fill priority sizes="100vw" className="object-cover scale-105 blur-sm" />
         )}
-        <div className="absolute inset-0 bg-gray-950/55" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-950/30 to-gray-950" />
+        {/* Dark vignette overlays */}
+        <div className="absolute inset-0 bg-gray-950/60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-950/60 via-transparent to-transparent" />
 
-        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
-          <MotionDiv
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400 mb-4">
-              Your next obsession awaits
-            </p>
-            <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-white mb-4 max-w-3xl leading-[1.1]">
-              Movies & Anime,<br />
-              <span className="text-amber-400">All in one place.</span>
+        <div className="relative z-10 flex flex-col justify-end h-full pb-16 px-4 sm:px-6 max-w-7xl mx-auto">
+          <MotionDiv initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: "easeOut" }}>
+
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-black/40 backdrop-blur-sm mb-6">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400">87,000+ Titles Available</span>
+            </div>
+
+            <h1 className="text-6xl sm:text-7xl font-black uppercase leading-[0.95] tracking-tight mb-5 max-w-3xl">
+              <span className="text-white block">MOVIES &amp;</span>
+              <span className="text-amber-400 block">ANIME,</span>
+              <span className="text-white block">ONE PLACE.</span>
             </h1>
-            <p className="text-gray-300 mb-8 max-w-lg text-lg mx-auto">
-              87,000+ movies · 10,000+ anime · Rate, review, discover.
+
+            <p className="text-gray-300 text-lg mb-8 max-w-lg leading-relaxed">
+              Browse 87,000+ movies and 10,000+ anime. Rate, review, and discover what to watch next — all free.
             </p>
-            <form action="/movies" method="GET" className="flex w-full max-w-xl gap-2 mx-auto">
+
+            <form action="/movies" method="GET" className="flex w-full max-w-lg mb-8">
               <input
                 name="q"
                 placeholder="Search a title..."
-                className="flex-1 h-12 rounded-xl border border-white/10 bg-white/10 backdrop-blur-md px-5 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="flex-1 h-12 border border-r-0 border-white/20 bg-black/40 backdrop-blur-sm px-5 text-sm text-white placeholder-white/40 focus:outline-none focus:border-amber-500 transition-colors"
               />
-              <button
-                type="submit"
-                className="h-12 px-6 rounded-xl bg-amber-500 text-sm font-bold text-black hover:bg-amber-400 transition-colors"
-              >
-                Search
+              <button type="submit" className="h-12 px-6 bg-amber-500 text-sm font-black uppercase tracking-wider text-black hover:bg-amber-400 transition-colors shrink-0">
+                SEARCH
               </button>
             </form>
+
+            <div className="flex flex-wrap gap-3 mb-10">
+              <Link href="/movies" className="px-7 py-3 bg-amber-500 text-black font-black uppercase tracking-wider text-sm hover:bg-amber-400 transition-colors">
+                BROWSE FREE →
+              </Link>
+              <Link href="/movies?sort=rating" className="px-7 py-3 border border-white/30 text-white font-bold uppercase tracking-wider text-sm hover:border-amber-500 hover:text-amber-400 transition-colors backdrop-blur-sm">
+                TOP RATED
+              </Link>
+            </div>
+
+            <div className="flex gap-8">
+              {[["87K+", "MOVIES"], ["10K+", "ANIME"], ["FREE", "FOREVER"]].map(([num, label]) => (
+                <div key={label}>
+                  <p className="text-2xl font-black text-white">{num}</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.15em] text-gray-400 mt-0.5">{label}</p>
+                </div>
+              ))}
+            </div>
+
           </MotionDiv>
         </div>
       </div>
 
-      {/* ── LAYER 2: Featured spotlight ── */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
-        <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500 mb-1">Featured Right Now</p>
-        <h2 className="text-2xl font-extrabold text-white mb-8 tracking-tight">What&apos;s Hot Today</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {hotAnime && (
-            <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-              <FeaturedCard item={hotAnime} label="Hottest Anime" accentClass="text-violet-400 border-violet-500/40 bg-violet-500/10" />
+      {/* ── TOP CONTENT ── */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-500 mb-1">Featured</p>
+            <h2 className="text-3xl font-black uppercase tracking-tight">
+              <span className="text-white">TOP </span>
+              <span className="text-amber-400">CONTENT</span>
+            </h2>
+          </div>
+          <Link href="/movies" className="px-5 py-2.5 border border-gray-700 text-sm font-bold uppercase tracking-wider text-gray-300 hover:border-amber-500 hover:text-amber-400 transition-colors">
+            VIEW ALL
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {topContent.map((item, i) => (
+            <MotionDiv key={item.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.08 }}>
+              <TopContentCard item={item} />
             </MotionDiv>
-          )}
-          {recentMovie && (
-            <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-              <FeaturedCard item={recentMovie} label="Recent Movie" accentClass="text-amber-400 border-amber-500/40 bg-amber-500/10" />
-            </MotionDiv>
-          )}
+          ))}
         </div>
       </section>
 
-      {/* ── LAYER 3: Browse CTAs ── */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 py-12 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
+      {/* ── PLATFORM FEATURES ── */}
+      <section
+        className="border-y border-gray-800/60 py-16 relative overflow-hidden"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+          backgroundColor: "rgb(3 7 18)",
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-violet-500/5 pointer-events-none" />
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="text-center mb-12">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-500 mb-2">Platform Features</p>
+            <h2 className="text-3xl font-black uppercase tracking-tight">
+              <span className="text-white">BUILT FOR </span>
+              <span className="text-amber-400">FILM LOVERS</span>
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {FEATURES.map((f, i) => (
+              <MotionDiv key={f.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.1 }}>
+                <FeatureCard {...f} />
+              </MotionDiv>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── BROWSE CTAs ── */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
           <BrowseCard
             href="/movies?type=movie"
-            title="Browse Movies"
-            description="Explore 87,000+ films from classics to blockbusters. Filter by genre, year, and rating."
+            label="87,000+ Films"
+            title="MOVIES"
+            description="From classics to blockbusters. Filter by genre, year, and rating."
             accentFrom="from-amber-600"
             accentTo="to-orange-700"
             icon={
@@ -112,11 +173,12 @@ export default async function HomePage() {
             }
           />
         </MotionDiv>
-        <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }}>
+        <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
           <BrowseCard
             href="/movies?type=anime"
-            title="Browse Anime"
-            description="Discover 10,000+ anime series and films. Find your next obsession."
+            label="10,000+ Series"
+            title="ANIME"
+            description="Discover series and films. Find your next obsession."
             accentFrom="from-violet-600"
             accentTo="to-purple-700"
             icon={
@@ -131,63 +193,124 @@ export default async function HomePage() {
   );
 }
 
-type FeaturedItem = {
+// ── Types ──────────────────────────────────────────────────────────────────
+
+type TopItem = {
   id: string; title: string; year: number | null;
-  posterUrl: string | null; mlAvgScore: number | null; genres: string[];
+  posterUrl: string | null; mlAvgScore: number | null;
+  genres: string[]; mlRatingCount: number | null;
 };
 
-function FeaturedCard({ item, label, accentClass }: { item: FeaturedItem; label: string; accentClass: string }) {
+// ── Top Content Card (like TOP GAMES) ──────────────────────────────────────
+
+function TopContentCard({ item }: { item: TopItem }) {
+  const genre = item.genres[0] ?? "FILM";
   return (
-    <Link href={`/movies/${item.id}`} className="group relative flex gap-5 rounded-2xl border border-gray-800 bg-gray-900 p-5 hover:border-gray-600 transition-colors overflow-hidden">
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
-      <div className="relative flex-shrink-0 w-24 h-36 rounded-xl overflow-hidden bg-gray-800">
+    <Link href={`/movies/${item.id}`} className="group block relative rounded-xl overflow-hidden bg-gray-900 border border-gray-800 hover:border-gray-600 transition-colors cursor-pointer">
+      <div className="relative aspect-[2/3] w-full bg-gray-800">
         {item.posterUrl && (
-          <Image src={item.posterUrl} alt={item.title} fill sizes="96px" className="object-cover transition-transform duration-300 group-hover:scale-105" />
+          <Image src={item.posterUrl} alt={item.title} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-300 group-hover:scale-105" />
         )}
+        <span className="absolute top-2 left-2 px-2 py-0.5 bg-amber-500 text-black text-[10px] font-black uppercase tracking-wider rounded-sm">
+          {genre}
+        </span>
       </div>
-      <div className="flex flex-col justify-between min-w-0">
-        <div>
-          <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full border mb-2 ${accentClass}`}>{label}</span>
-          <h3 className="text-base font-bold text-white leading-snug line-clamp-2 group-hover:text-amber-300 transition-colors">
-            {formatTitle(item.title)}
-          </h3>
-          <p className="text-sm text-gray-500 mt-1">{item.year}</p>
-          <div className="flex flex-wrap gap-1 mt-2">
-            {item.genres.slice(0, 3).map((g) => (
-              <span key={g} className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-md">{g}</span>
-            ))}
-          </div>
+      <div className="p-3">
+        <h3 className="text-sm font-black uppercase text-white truncate leading-snug group-hover:text-amber-300 transition-colors">
+          {formatTitle(item.title)}
+        </h3>
+        <div className="flex items-center justify-between mt-1.5">
+          <span className="text-xs text-gray-500">{fmtCount(item.mlRatingCount)} ratings</span>
+          {item.mlAvgScore != null && (
+            <span className="flex items-center gap-1 text-xs font-bold text-amber-400">
+              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+              </svg>
+              {formatScore(item.mlAvgScore)}
+            </span>
+          )}
         </div>
-        {item.mlAvgScore != null && (
-          <div className="flex items-center gap-1 mt-3">
-            <svg className="h-4 w-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-            </svg>
-            <span className="text-sm font-bold text-white">{formatScore(item.mlAvgScore)}</span>
-            <span className="text-xs text-gray-500">/ 10</span>
-          </div>
-        )}
       </div>
     </Link>
   );
 }
 
-function BrowseCard({ href, title, description, accentFrom, accentTo, icon }: {
-  href: string; title: string; description: string;
+// ── Platform Features ──────────────────────────────────────────────────────
+
+const FEATURES = [
+  {
+    title: "RATE & REVIEW",
+    description: "Score any title 1–10 and leave your take for the community.",
+    iconBg: "from-amber-600 to-orange-700",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+      </svg>
+    ),
+  },
+  {
+    title: "SMART FILTERS",
+    description: "Filter by genre, year, score, and more to find exactly what you want.",
+    iconBg: "from-violet-600 to-purple-700",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+      </svg>
+    ),
+  },
+  {
+    title: "87K+ TITLES",
+    description: "Movies and anime from every genre, era, and corner of the world.",
+    iconBg: "from-teal-600 to-cyan-700",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+      </svg>
+    ),
+  },
+  {
+    title: "FREE FOREVER",
+    description: "No subscriptions, no paywalls. Discover and rate everything for free.",
+    iconBg: "from-emerald-600 to-green-700",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+];
+
+function FeatureCard({ title, description, iconBg, icon }: { title: string; description: string; iconBg: string; icon: React.ReactNode }) {
+  return (
+    <div className="flex flex-col items-center text-center">
+      <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br ${iconBg} text-white mb-4 shadow-lg`}>
+        {icon}
+      </div>
+      <h3 className="text-sm font-black uppercase tracking-wide text-white mb-2">{title}</h3>
+      <p className="text-sm text-gray-400 leading-relaxed">{description}</p>
+    </div>
+  );
+}
+
+// ── Browse CTA Card ────────────────────────────────────────────────────────
+
+function BrowseCard({ href, label, title, description, accentFrom, accentTo, icon }: {
+  href: string; label: string; title: string; description: string;
   accentFrom: string; accentTo: string; icon: React.ReactNode;
 }) {
   return (
-    <Link href={href} className="group relative flex flex-col justify-between rounded-2xl overflow-hidden border border-gray-800 bg-gray-900 p-8 hover:border-gray-600 transition-all duration-300 min-h-[200px]">
+    <Link href={href} className="group relative flex flex-col justify-between rounded-2xl overflow-hidden border border-gray-800 bg-gray-900 p-8 hover:border-gray-600 transition-all duration-300 min-h-[200px] cursor-pointer">
       <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${accentFrom} ${accentTo}`} />
       <div>
         <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br ${accentFrom} ${accentTo} text-white mb-4 shadow-lg`}>
           {icon}
         </div>
-        <h3 className="text-xl font-extrabold text-white mb-2 group-hover:text-amber-300 transition-colors tracking-tight">{title}</h3>
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mb-1">{label}</p>
+        <h3 className="text-2xl font-black uppercase tracking-tight text-white mb-2 group-hover:text-amber-300 transition-colors">{title}</h3>
         <p className="text-sm text-gray-400 leading-relaxed">{description}</p>
       </div>
-      <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">
-        Explore now
+      <div className="mt-6 flex items-center gap-2 text-sm font-black uppercase tracking-wider text-gray-300 group-hover:text-white transition-colors">
+        EXPLORE NOW
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
         </svg>
