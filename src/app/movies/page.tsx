@@ -3,13 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { MovieGrid } from "@/components/movies/MovieGrid";
 import { MovieFilters } from "@/components/movies/MovieFilters";
 import { RandomMovieButton } from "@/components/movies/RandomMovieButton";
-import { Spinner } from "@/components/ui/Spinner";
+import { MovieGridSkeleton } from "@/components/movies/MovieCardSkeleton";
+import { ViewToggle } from "@/components/movies/ViewToggle";
 import type { Metadata } from "next";
+import type { MovieWithStats } from "@/types";
 
-export const metadata: Metadata = { title: "Browse Movies — MyMoviePal" };
+export const metadata: Metadata = { title: "Browse — MyMoviePal" };
 
 interface PageProps {
-  searchParams: { q?: string; genre?: string; year?: string; page?: string; sort?: string; type?: string };
+  searchParams: { q?: string; genre?: string; year?: string; page?: string; sort?: string; type?: string; view?: string };
 }
 
 async function MovieResults({ searchParams }: PageProps) {
@@ -18,8 +20,9 @@ async function MovieResults({ searchParams }: PageProps) {
   const year = searchParams.year ? parseInt(searchParams.year) : undefined;
   const sort = searchParams.sort ?? "popular";
   const type = searchParams.type ?? "";
+  const view = (searchParams.view === "grid" ? "grid" : "list") as "list" | "grid";
   const page = Math.max(1, parseInt(searchParams.page ?? "1"));
-  const limit = 20;
+  const limit = view === "grid" ? 24 : 20;
 
   const where = {
     ...(q && { title: { contains: q, mode: "insensitive" as const } }),
@@ -31,92 +34,68 @@ async function MovieResults({ searchParams }: PageProps) {
   };
 
   const orderBy =
-    sort === "title"    ? { title: "asc" as const } :
-    sort === "year"     ? { year: "desc" as const } :
-    sort === "rating"   ? { mlAvgScore: "desc" as const } :
-    /* popular */         { mlRatingCount: "desc" as const };
+    sort === "title"  ? { title: "asc" as const } :
+    sort === "year"   ? { year: "desc" as const } :
+    sort === "rating" ? { mlAvgScore: "desc" as const } :
+                        { mlRatingCount: "desc" as const };
 
   const [movies, total] = await Promise.all([
-    prisma.movie.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy,
-      include: { _count: { select: { ratings: true } } },
-    }),
+    prisma.movie.findMany({ where, skip: (page - 1) * limit, take: limit, orderBy, include: { _count: { select: { ratings: true } } } }),
     prisma.movie.count({ where }),
   ]);
 
-  const moviesWithStats = movies.map((m: typeof movies[0]) => ({
-    ...m,
-    _avg: { score: null as number | null },
-  }));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const moviesWithStats = movies.map((m: any) => ({ ...m, _avg: { score: null as number | null } })) as MovieWithStats[];
 
   return (
     <div>
-      <p className="text-sm text-gray-400 mb-5">
-        {total} {total === 1 ? "movie" : "movies"} found
-      </p>
-      <MovieGrid movies={moviesWithStats} />
-      {total > limit && (
-        <Pagination page={page} pages={Math.ceil(total / limit)} searchParams={searchParams} />
-      )}
+      <p className="text-sm text-gray-500 mb-5">{total.toLocaleString()} {total === 1 ? "result" : "results"}</p>
+      <MovieGrid movies={moviesWithStats} view={view} />
+      {total > limit && <Pagination page={page} pages={Math.ceil(total / limit)} searchParams={searchParams} />}
     </div>
   );
 }
 
-function Pagination({
-  page,
-  pages,
-  searchParams,
-}: {
-  page: number;
-  pages: number;
-  searchParams: Record<string, string | undefined>;
-}) {
+function Pagination({ page, pages, searchParams }: { page: number; pages: number; searchParams: Record<string, string | undefined> }) {
   const params = (p: number) => {
     const sp = new URLSearchParams();
     Object.entries(searchParams).forEach(([k, v]) => v && sp.set(k, v));
     sp.set("page", String(p));
     return `/movies?${sp.toString()}`;
   };
-
   return (
     <div className="mt-8 flex items-center justify-center gap-2">
       {page > 1 && (
-        <a href={params(page - 1)} className="px-4 py-2 rounded-lg bg-gray-800 text-sm hover:bg-gray-700 transition-colors">
-          ← Previous
-        </a>
+        <a href={params(page - 1)} className="px-4 py-2 rounded-lg bg-gray-800 text-sm hover:bg-gray-700 transition-colors">← Previous</a>
       )}
       <span className="text-sm text-gray-500">Page {page} of {pages}</span>
       {page < pages && (
-        <a href={params(page + 1)} className="px-4 py-2 rounded-lg bg-gray-800 text-sm hover:bg-gray-700 transition-colors">
-          Next →
-        </a>
+        <a href={params(page + 1)} className="px-4 py-2 rounded-lg bg-gray-800 text-sm hover:bg-gray-700 transition-colors">Next →</a>
       )}
     </div>
   );
 }
 
 export default function MoviesPage({ searchParams }: PageProps) {
+  const view = (searchParams.view === "grid" ? "grid" : "list") as "list" | "grid";
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-100">Browse Movies</h1>
-        <RandomMovieButton />
+        <h1 className="text-2xl font-extrabold text-white tracking-tight">Browse</h1>
+        <div className="flex items-center gap-3">
+          <Suspense>
+            <ViewToggle view={view} />
+          </Suspense>
+          <RandomMovieButton />
+        </div>
       </div>
       <div className="mb-6">
         <Suspense>
           <MovieFilters />
         </Suspense>
       </div>
-      <Suspense
-        fallback={
-          <div className="flex justify-center py-20">
-            <Spinner className="h-8 w-8" />
-          </div>
-        }
-      >
+      <Suspense fallback={<MovieGridSkeleton view={view} />}>
         <MovieResults searchParams={searchParams} />
       </Suspense>
     </div>
