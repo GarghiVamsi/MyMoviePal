@@ -78,21 +78,6 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* ── LAYER 1: Tab nav ── */}
-      <div className="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-16 z-40">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 flex gap-1 py-2">
-          <Link href="/movies" className="px-5 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
-            All
-          </Link>
-          <Link href="/movies?type=movie" className="px-5 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
-            Movies
-          </Link>
-          <Link href="/movies?type=anime" className="px-5 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
-            Anime
-          </Link>
-        </div>
-      </div>
-
       {/* ── LAYER 2: Featured spotlight ── */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
         <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-500 mb-1">Featured Right Now</p>

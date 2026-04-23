@@ -22,7 +22,13 @@ export function Navbar() {
         {/* Desktop nav */}
         <nav className="hidden sm:flex items-center gap-1">
           <Link href="/movies" className="px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-gray-100 hover:bg-gray-800 transition-colors">
-            Browse
+            All
+          </Link>
+          <Link href="/movies?type=movie" className="px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-gray-100 hover:bg-gray-800 transition-colors">
+            Movies
+          </Link>
+          <Link href="/movies?type=anime" className="px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-gray-100 hover:bg-gray-800 transition-colors">
+            Anime
           </Link>
           {session && (
             <>
@@ -79,7 +85,13 @@ export function Navbar() {
       {menuOpen && (
         <nav className="sm:hidden border-t border-gray-800 bg-gray-950 px-4 py-3 flex flex-col gap-1">
           <Link href="/movies" onClick={() => setMenuOpen(false)} className="py-2 text-sm text-gray-300 hover:text-amber-400">
-            Browse Movies
+            All
+          </Link>
+          <Link href="/movies?type=movie" onClick={() => setMenuOpen(false)} className="py-2 text-sm text-gray-300 hover:text-amber-400">
+            Movies
+          </Link>
+          <Link href="/movies?type=anime" onClick={() => setMenuOpen(false)} className="py-2 text-sm text-gray-300 hover:text-amber-400">
+            Anime
           </Link>
           {session && (
             <>
