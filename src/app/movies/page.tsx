@@ -36,7 +36,7 @@ async function MovieResults({ searchParams }: PageProps) {
   let moviesWithStats: MovieWithStats[];
   let total: number;
 
-  if (sort === "popular") {
+  if (sort === "popular" || sort === "title") {
     type RawMovie = {
       id: string; title: string; year: number | null; overview: string | null;
       posterUrl: string | null; runtime: number | null; director: string | null;
@@ -49,25 +49,27 @@ async function MovieResults({ searchParams }: PageProps) {
     // Build parameterized WHERE string — avoids Prisma.empty comma injection bug
     let idx = 1;
     const sqlParams: (string | number)[] = [];
-    let extra = "";
-    if (q)     { extra += ` AND LOWER(title) LIKE $${idx++}`;     sqlParams.push(`%${q.toLowerCase()}%`); }
-    if (genre) { extra += ` AND $${idx++} = ANY(genres)`;         sqlParams.push(genre); }
-    if (year)  { extra += ` AND year = $${idx++}`;                sqlParams.push(year); }
-    if (type)  { extra += ` AND "contentType" = $${idx++}`;       sqlParams.push(type); }
+    let extra = sort === "popular" ? `"mlRatingCount" > 0 AND "posterUrl" IS NOT NULL` : `TRUE`;
+    if (q)     { extra += ` AND LOWER(title) LIKE $${idx++}`;  sqlParams.push(`%${q.toLowerCase()}%`); }
+    if (genre) { extra += ` AND $${idx++} = ANY(genres)`;      sqlParams.push(genre); }
+    if (year)  { extra += ` AND year = $${idx++}`;             sqlParams.push(year); }
+    if (type)  { extra += ` AND "contentType" = $${idx++}`;    sqlParams.push(type); }
 
-    const baseWhere = `"mlRatingCount" > 0 AND "posterUrl" IS NOT NULL${extra}`;
+    const orderBySql = sort === "popular"
+      ? `ORDER BY RANDOM()`
+      : `ORDER BY CASE WHEN title ~ '^[a-zA-Z]' THEN 0 WHEN title ~ '^[0-9]' THEN 1 ELSE 2 END, LOWER(title) ASC`;
 
     const [rawMovies, countResult] = await Promise.all([
       prisma.$queryRawUnsafe<RawMovie[]>(
         `SELECT id, title, year, overview, "posterUrl", runtime, director, genres, "cast",
                 "mlMovieId", "mlAvgScore", "mlRatingCount", "contentType", "episodeCount",
                 "anilistId", "createdAt"
-         FROM movies WHERE ${baseWhere}
-         ORDER BY RANDOM() LIMIT ${limit} OFFSET ${(page - 1) * limit}`,
+         FROM movies WHERE ${extra}
+         ${orderBySql} LIMIT ${limit} OFFSET ${(page - 1) * limit}`,
         ...sqlParams
       ),
       prisma.$queryRawUnsafe<[{ count: bigint | string }]>(
-        `SELECT COUNT(*) as count FROM movies WHERE ${baseWhere}`,
+        `SELECT COUNT(*) as count FROM movies WHERE ${extra}`,
         ...sqlParams
       ),
     ]);
@@ -82,7 +84,6 @@ async function MovieResults({ searchParams }: PageProps) {
     })) as MovieWithStats[];
   } else {
     const orderBy =
-      sort === "title"  ? { title: "asc" as const } :
       sort === "year"   ? { year: "desc" as const } :
                           { mlAvgScore: "desc" as const };
 
