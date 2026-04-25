@@ -11,7 +11,7 @@ import type { MovieWithStats } from "@/types";
 export const metadata: Metadata = { title: "Browse — MyMoviePal" };
 
 interface PageProps {
-  searchParams: { q?: string; genre?: string; year?: string; page?: string; sort?: string; type?: string; view?: string };
+  searchParams: { q?: string; genre?: string; year?: string; page?: string; sort?: string; type?: string; view?: string; r?: string };
 }
 
 async function MovieResults({ searchParams }: PageProps) {
@@ -30,22 +30,77 @@ async function MovieResults({ searchParams }: PageProps) {
     ...(year && { year }),
     ...(type && { contentType: type }),
     ...(sort === "popular" && { mlRatingCount: { gt: 0 } }),
-    ...(sort === "rating" && { mlAvgScore: { not: null } }),
   };
 
-  const orderBy =
-    sort === "title"  ? { title: "asc" as const } :
-    sort === "year"   ? { year: "desc" as const } :
-    sort === "rating" ? { mlAvgScore: "desc" as const } :
-                        { mlRatingCount: "desc" as const };
+  let moviesWithStats: MovieWithStats[];
+  let total: number;
 
-  const [movies, total] = await Promise.all([
-    prisma.movie.findMany({ where, skip: (page - 1) * limit, take: limit, orderBy, include: { _count: { select: { ratings: true } } } }),
-    prisma.movie.count({ where }),
-  ]);
+  if (sort === "popular" || sort === "title" || sort === "rating") {
+    type RawMovie = {
+      id: string; title: string; year: number | null; overview: string | null;
+      posterUrl: string | null; runtime: number | null; director: string | null;
+      genres: string[]; cast: string[]; mlMovieId: number | null;
+      mlAvgScore: number | null; mlRatingCount: number | null;
+      contentType: string; episodeCount: number | null; anilistId: number | null;
+      createdAt: Date;
+    };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const moviesWithStats = movies.map((m: any) => ({ ...m, _avg: { score: null as number | null } })) as MovieWithStats[];
+    // Build parameterized WHERE string — avoids Prisma.empty comma injection bug
+    let idx = 1;
+    const sqlParams: (string | number)[] = [];
+    let extra = sort === "popular"
+      ? `"mlRatingCount" > 0 AND "posterUrl" IS NOT NULL`
+      : sort === "rating"
+        ? `"mlAvgScore" IS NOT NULL AND "mlRatingCount" > 0`
+        : `TRUE`;
+    if (q)     { extra += ` AND LOWER(title) LIKE $${idx++}`;  sqlParams.push(`%${q.toLowerCase()}%`); }
+    if (genre) { extra += ` AND $${idx++} = ANY(genres)`;      sqlParams.push(genre); }
+    if (year)  { extra += ` AND year = $${idx++}`;             sqlParams.push(year); }
+    if (type)  { extra += ` AND "contentType" = $${idx++}`;    sqlParams.push(type); }
+
+    const orderBySql = sort === "popular"
+      ? `ORDER BY RANDOM()`
+      : sort === "rating"
+        ? `ORDER BY ("mlRatingCount" * "mlAvgScore" + 1000 * 7.0) / ("mlRatingCount" + 1000.0) DESC`
+        : `ORDER BY CASE WHEN title ~ '^[a-zA-Z]' THEN 0 WHEN title ~ '^[0-9]' THEN 1 ELSE 2 END, LOWER(title) ASC`;
+
+    const [rawMovies, countResult] = await Promise.all([
+      prisma.$queryRawUnsafe<RawMovie[]>(
+        `SELECT id, title, year, overview, "posterUrl", runtime, director, genres, "cast",
+                "mlMovieId", "mlAvgScore", "mlRatingCount", "contentType", "episodeCount",
+                "anilistId", "createdAt"
+         FROM movies WHERE ${extra}
+         ${orderBySql} LIMIT ${limit} OFFSET ${(page - 1) * limit}`,
+        ...sqlParams
+      ),
+      prisma.$queryRawUnsafe<[{ count: bigint | string }]>(
+        `SELECT COUNT(*) as count FROM movies WHERE ${extra}`,
+        ...sqlParams
+      ),
+    ]);
+
+    total = Number(countResult[0].count);
+    moviesWithStats = rawMovies.map((m) => ({
+      ...m,
+      overview: m.overview ?? "",
+      cast: m.cast ?? [],
+      _count: { ratings: 0 },
+      _avg: { score: null },
+    })) as MovieWithStats[];
+  } else {
+    const orderBy =
+      sort === "year"   ? { year: "desc" as const } :
+                          { mlAvgScore: "desc" as const };
+
+    const [movies, count] = await Promise.all([
+      prisma.movie.findMany({ where, skip: (page - 1) * limit, take: limit, orderBy, include: { _count: { select: { ratings: true } } } }),
+      prisma.movie.count({ where }),
+    ]);
+
+    total = count;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    moviesWithStats = movies.map((m: any) => ({ ...m, _avg: { score: null as number | null } })) as MovieWithStats[];
+  }
 
   return (
     <div>
