@@ -25,6 +25,7 @@ export function MovieFilters() {
       if (value) params.set(key, value);
       else params.delete(key);
       params.delete("page");
+      params.set("r", String(Date.now()));
       router.push(`/movies?${params.toString()}`);
     },
     [router, searchParams]
