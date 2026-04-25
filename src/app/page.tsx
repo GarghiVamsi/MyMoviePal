@@ -8,17 +8,18 @@ import type { Metadata } from "next";
 export const metadata: Metadata = { title: "MyMoviePal — Discover Movies & Anime" };
 
 async function fetchFeatured() {
-  const [topContent, hotAnime, recentMovie] = await Promise.all([
+  const [topAnime, topMovies, recentMovie] = await Promise.all([
     prisma.movie.findMany({
-      where: { mlAvgScore: { not: null }, mlRatingCount: { gt: 100 }, posterUrl: { not: null } },
+      where: { contentType: "anime", mlAvgScore: { not: null }, mlRatingCount: { gt: 50 }, posterUrl: { not: null } },
       orderBy: { mlRatingCount: "desc" },
       take: 4,
       select: { id: true, title: true, year: true, posterUrl: true, mlAvgScore: true, genres: true, mlRatingCount: true },
     }),
-    prisma.movie.findFirst({
-      where: { contentType: "anime", mlAvgScore: { not: null }, mlRatingCount: { gt: 0 }, posterUrl: { not: null } },
-      orderBy: { mlRatingCount: "desc" },
-      select: { id: true, title: true, year: true, posterUrl: true, mlAvgScore: true, genres: true },
+    prisma.movie.findMany({
+      where: { contentType: "movie", mlAvgScore: { not: null }, mlRatingCount: { gt: 50 }, posterUrl: { not: null }, year: { gte: 2022 } },
+      orderBy: { mlAvgScore: "desc" },
+      take: 4,
+      select: { id: true, title: true, year: true, posterUrl: true, mlAvgScore: true, genres: true, mlRatingCount: true },
     }),
     prisma.movie.findFirst({
       where: { contentType: "movie", mlAvgScore: { not: null }, mlRatingCount: { gt: 0 }, posterUrl: { not: null } },
@@ -26,7 +27,7 @@ async function fetchFeatured() {
       select: { id: true, title: true, year: true, posterUrl: true, mlAvgScore: true, genres: true },
     }),
   ]);
-  return { topContent, hotAnime, recentMovie };
+  return { topAnime, topMovies, recentMovie };
 }
 
 function fmtCount(n: number | null): string {
@@ -37,8 +38,8 @@ function fmtCount(n: number | null): string {
 }
 
 export default async function HomePage() {
-  const { topContent, hotAnime, recentMovie } = await fetchFeatured();
-  const heroItem = recentMovie ?? hotAnime ?? topContent[0] ?? null;
+  const { topAnime, topMovies, recentMovie } = await fetchFeatured();
+  const heroItem = recentMovie ?? topMovies[0] ?? topAnime[0] ?? null;
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -104,22 +105,47 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* ── TOP CONTENT ── */}
+      {/* ── TOP ANIME CONTENT ── */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-500 mb-1">Featured</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-400 mb-1">Featured</p>
             <h2 className="text-3xl font-black uppercase tracking-tight">
               <span className="text-white">TOP </span>
-              <span className="text-amber-400">CONTENT</span>
+              <span className="text-amber-400">ANIME</span>
+              <span className="text-white"> CONTENT</span>
             </h2>
           </div>
-          <Link href="/movies" className="px-5 py-2.5 border border-gray-700 text-sm font-bold uppercase tracking-wider text-gray-300 hover:border-amber-500 hover:text-amber-400 transition-colors">
-            VIEW ALL
+          <Link href="/movies?type=anime" className="px-5 py-2.5 border border-gray-700 text-sm font-bold uppercase tracking-wider text-gray-300 hover:border-amber-500 hover:text-amber-400 transition-colors">
+            VIEW ALL ANIME
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {topContent.map((item, i) => (
+          {topAnime.map((item, i) => (
+            <MotionDiv key={item.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.08 }}>
+              <TopContentCard item={item} />
+            </MotionDiv>
+          ))}
+        </div>
+      </section>
+
+      {/* ── TOP MOVIE CONTENT ── */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-16">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-500 mb-1">Recent Hits</p>
+            <h2 className="text-3xl font-black uppercase tracking-tight">
+              <span className="text-white">TOP </span>
+              <span className="text-amber-400">MOVIE</span>
+              <span className="text-white"> CONTENT</span>
+            </h2>
+          </div>
+          <Link href="/movies?type=movie" className="px-5 py-2.5 border border-gray-700 text-sm font-bold uppercase tracking-wider text-gray-300 hover:border-amber-500 hover:text-amber-400 transition-colors">
+            VIEW ALL MOVIES
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {topMovies.map((item, i) => (
             <MotionDiv key={item.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.08 }}>
               <TopContentCard item={item} />
             </MotionDiv>
