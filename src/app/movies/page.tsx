@@ -30,13 +30,12 @@ async function MovieResults({ searchParams }: PageProps) {
     ...(year && { year }),
     ...(type && { contentType: type }),
     ...(sort === "popular" && { mlRatingCount: { gt: 0 } }),
-    ...(sort === "rating" && { mlAvgScore: { not: null } }),
   };
 
   let moviesWithStats: MovieWithStats[];
   let total: number;
 
-  if (sort === "popular" || sort === "title") {
+  if (sort === "popular" || sort === "title" || sort === "rating") {
     type RawMovie = {
       id: string; title: string; year: number | null; overview: string | null;
       posterUrl: string | null; runtime: number | null; director: string | null;
@@ -49,7 +48,11 @@ async function MovieResults({ searchParams }: PageProps) {
     // Build parameterized WHERE string — avoids Prisma.empty comma injection bug
     let idx = 1;
     const sqlParams: (string | number)[] = [];
-    let extra = sort === "popular" ? `"mlRatingCount" > 0 AND "posterUrl" IS NOT NULL` : `TRUE`;
+    let extra = sort === "popular"
+      ? `"mlRatingCount" > 0 AND "posterUrl" IS NOT NULL`
+      : sort === "rating"
+        ? `"mlAvgScore" IS NOT NULL AND "mlRatingCount" > 0`
+        : `TRUE`;
     if (q)     { extra += ` AND LOWER(title) LIKE $${idx++}`;  sqlParams.push(`%${q.toLowerCase()}%`); }
     if (genre) { extra += ` AND $${idx++} = ANY(genres)`;      sqlParams.push(genre); }
     if (year)  { extra += ` AND year = $${idx++}`;             sqlParams.push(year); }
@@ -57,7 +60,9 @@ async function MovieResults({ searchParams }: PageProps) {
 
     const orderBySql = sort === "popular"
       ? `ORDER BY RANDOM()`
-      : `ORDER BY CASE WHEN title ~ '^[a-zA-Z]' THEN 0 WHEN title ~ '^[0-9]' THEN 1 ELSE 2 END, LOWER(title) ASC`;
+      : sort === "rating"
+        ? `ORDER BY ("mlRatingCount" * "mlAvgScore" + 1000 * 7.0) / ("mlRatingCount" + 1000.0) DESC`
+        : `ORDER BY CASE WHEN title ~ '^[a-zA-Z]' THEN 0 WHEN title ~ '^[0-9]' THEN 1 ELSE 2 END, LOWER(title) ASC`;
 
     const [rawMovies, countResult] = await Promise.all([
       prisma.$queryRawUnsafe<RawMovie[]>(
