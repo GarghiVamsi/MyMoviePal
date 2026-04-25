@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
-import { Input } from "@/components/ui/Input";
+import { SearchAutocomplete } from "@/components/movies/SearchAutocomplete";
 
 const GENRES = [
   "Action", "Adventure", "Animation", "Children", "Comedy", "Crime",
@@ -33,14 +33,10 @@ export function MovieFilters() {
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-      <div className="flex-1">
-        <Input
-          placeholder="Search movies..."
-          defaultValue={searchParams.get("q") ?? ""}
-          onChange={(e) => update("q", e.target.value)}
-          className="h-11"
-        />
-      </div>
+      <SearchAutocomplete
+        defaultValue={searchParams.get("q") ?? ""}
+        onSearch={(q) => update("q", q)}
+      />
       <label htmlFor="type-filter" className="sr-only">Content type</label>
       <select
         id="type-filter"
