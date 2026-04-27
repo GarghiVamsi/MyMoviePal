@@ -3,6 +3,7 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { formatTitle, formatScore } from "@/lib/utils";
 import { MotionDiv } from "@/components/ui/Motion";
+import { HeroSearch } from "@/components/movies/HeroSearch";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "MyMoviePal — Discover Movies & Anime" };
@@ -72,16 +73,7 @@ export default async function HomePage() {
               Browse 87,000+ movies and 10,000+ anime. Rate, review, and discover what to watch next — all free.
             </p>
 
-            <form action="/movies" method="GET" className="flex w-full max-w-lg mb-8">
-              <input
-                name="q"
-                placeholder="Search a title..."
-                className="flex-1 h-12 border border-r-0 border-white/20 bg-black/40 backdrop-blur-sm px-5 text-sm text-white placeholder-white/40 focus:outline-none focus:border-amber-500 transition-colors"
-              />
-              <button type="submit" className="h-12 px-6 bg-amber-500 text-sm font-black uppercase tracking-wider text-black hover:bg-amber-400 transition-colors shrink-0">
-                SEARCH
-              </button>
-            </form>
+            <HeroSearch />
 
             <div className="flex flex-wrap gap-3 mb-10">
               <Link href="/movies" className="px-7 py-3 bg-amber-500 text-black font-black uppercase tracking-wider text-sm hover:bg-amber-400 transition-colors">
