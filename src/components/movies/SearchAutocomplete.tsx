@@ -29,7 +29,7 @@ export function SearchAutocomplete({ defaultValue = "", onSearch, onSubmit }: Pr
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (query.length < 2) { setSuggestions([]); setOpen(false); return; }
+    if (query.length < 1) { setSuggestions([]); setOpen(false); return; }
 
     debounceRef.current = setTimeout(async () => {
       const res = await fetch(`/api/movies/suggest?q=${encodeURIComponent(query)}`);

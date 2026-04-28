@@ -58,11 +58,23 @@ async function MovieResults({ searchParams }: PageProps) {
     if (year)  { extra += ` AND year = $${idx++}`;             sqlParams.push(year); }
     if (type)  { extra += ` AND "contentType" = $${idx++}`;    sqlParams.push(type); }
 
-    const orderBySql = sort === "popular"
-      ? `ORDER BY RANDOM()`
-      : sort === "rating"
-        ? `ORDER BY ("mlRatingCount" * "mlAvgScore" + 1000 * 7.0) / ("mlRatingCount" + 1000.0) DESC`
-        : `ORDER BY CASE WHEN title ~ '^[a-zA-Z]' THEN 0 WHEN title ~ '^[0-9]' THEN 1 ELSE 2 END, LOWER(title) ASC`;
+    let orderBySql: string;
+    if (sort === "popular") {
+      if (q) {
+        const qLower = q.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const startsWithIdx = idx++;
+        const wordBoundaryIdx = idx++;
+        sqlParams.push(`${q.toLowerCase()}%`);
+        sqlParams.push(`(^|\\s)${qLower}`);
+        orderBySql = `ORDER BY CASE WHEN LOWER(title) LIKE $${startsWithIdx} THEN 0 WHEN LOWER(title) ~ $${wordBoundaryIdx} THEN 1 ELSE 2 END ASC, "mlRatingCount" DESC NULLS LAST`;
+      } else {
+        orderBySql = `ORDER BY RANDOM()`;
+      }
+    } else if (sort === "rating") {
+      orderBySql = `ORDER BY ("mlRatingCount" * "mlAvgScore" + 1000 * 7.0) / ("mlRatingCount" + 1000.0) DESC`;
+    } else {
+      orderBySql = `ORDER BY CASE WHEN title ~ '^[a-zA-Z]' THEN 0 WHEN title ~ '^[0-9]' THEN 1 ELSE 2 END, LOWER(title) ASC`;
+    }
 
     const [rawMovies, countResult] = await Promise.all([
       prisma.$queryRawUnsafe<RawMovie[]>(
