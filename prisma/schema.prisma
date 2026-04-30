@@ -62,6 +62,7 @@ model Movie {
   contentType     String   @default("movie")
   episodeCount    Int?
   anilistId       Int?     @unique
+  bannerImage     String?
   createdAt       DateTime @default(now())
 
   ratings   Rating[]

@@ -37,6 +37,7 @@ query ($page: Int, $perPage: Int) {
       coverImage {
         large
       }
+      bannerImage
       genres
       startDate {
         year
@@ -54,6 +55,7 @@ interface AniListMedia {
   description: string | null;
   episodes: number | null;
   coverImage: { large: string | null };
+  bannerImage: string | null;
   genres: string[];
   startDate: { year: number | null };
   averageScore: number | null;
@@ -157,6 +159,7 @@ async function main() {
       const score = anime.averageScore != null ? anime.averageScore / 10 : null;
       const genres = mapGenres(anime.genres);
       const posterUrl = anime.coverImage.large ?? null;
+      const bannerImage = anime.bannerImage ?? null;
       const overview = anime.description ?? "";
 
       const isNew = !existingIds.has(anime.id);
@@ -169,6 +172,7 @@ async function main() {
             year,
             overview,
             posterUrl,
+            bannerImage,
             genres,
             episodeCount: anime.episodes ?? null,
             mlAvgScore: score,
@@ -179,6 +183,7 @@ async function main() {
             year,
             overview,
             posterUrl,
+            bannerImage,
             genres,
             episodeCount: anime.episodes ?? null,
             mlAvgScore: score,

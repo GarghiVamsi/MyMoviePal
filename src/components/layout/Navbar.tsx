@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const navLinkClass =
   "relative px-3 py-2 text-xs font-bold uppercase tracking-widest text-gray-400 transition-colors duration-200 hover:text-white group cursor-pointer";
@@ -15,6 +15,63 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
     </Link>
   );
 }
+
+function BrowseMenu() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const items = [
+    { label: "All", href: "/movies" },
+    { label: "Movies", href: "/movies?type=movie" },
+    { label: "Anime", href: "/movies?type=anime" },
+  ] as const;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className={`${navLinkClass} flex items-center gap-1`}
+      >
+        Browse
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className={`h-3 w-3 transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+        <span className="absolute bottom-0.5 left-3 right-3 h-px scale-x-0 bg-amber-400 transition-transform duration-200 group-hover:scale-x-100 motion-reduce:transition-none" />
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 mt-1 w-40 rounded-lg border border-gray-800 bg-gray-900 shadow-xl overflow-hidden z-50">
+          {items.map(({ label, href }) => (
+            <Link
+              key={href}
+              href={href}
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-gray-300 hover:text-amber-400 hover:bg-gray-800 transition-colors"
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 export function Navbar() {
   const { data: session } = useSession();
@@ -36,9 +93,9 @@ export function Navbar() {
           : "border-transparent bg-transparent"
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-        {/* Two-tone logo */}
-        <Link href="/" className="flex items-center gap-2 font-black text-lg transition-opacity duration-200 hover:opacity-80">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2 font-black text-lg transition-opacity duration-200 hover:opacity-80 shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
           </svg>
@@ -47,9 +104,7 @@ export function Navbar() {
 
         {/* Desktop nav */}
         <nav className="hidden sm:flex items-center gap-1">
-          <NavLink href="/movies">All</NavLink>
-          <NavLink href="/movies?type=movie">Movies</NavLink>
-          <NavLink href="/movies?type=anime">Anime</NavLink>
+          <BrowseMenu />
           {session && (
             <>
               <NavLink href="/profile">My Ratings</NavLink>

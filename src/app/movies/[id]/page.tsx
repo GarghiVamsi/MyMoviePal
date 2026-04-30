@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { StarRating } from "@/components/ui/StarRating";
 import { RatingForm } from "@/components/movies/RatingForm";
 import { RatingsList } from "@/components/movies/RatingsList";
+import { MovieCard } from "@/components/movies/MovieCard";
 import { Rating } from "@/types";
 import { formatRuntime, formatScore, formatTitle } from "@/lib/utils";
 import { WatchlistButton } from "@/components/movies/WatchlistButton";
@@ -49,11 +50,22 @@ export default async function MovieDetailPage({ params }: PageProps) {
     ? movie.ratings.find((r: { userId: string }) => r.userId === session!.user.id) ?? null
     : null;
 
-  const isWatchlisted = session
-    ? !!(await prisma.watchlist.findUnique({
-        where: { userId_movieId: { userId: session.user.id, movieId: movie.id } },
-      }))
-    : false;
+  const [isWatchlisted, similar] = await Promise.all([
+    session
+      ? prisma.watchlist.findUnique({
+          where: { userId_movieId: { userId: session.user.id, movieId: movie.id } },
+        }).then(Boolean)
+      : Promise.resolve(false),
+    prisma.movie.findMany({
+      where: {
+        id: { not: movie.id },
+        contentType: movie.contentType,
+        genres: { hasSome: movie.genres },
+      },
+      orderBy: [{ mlAvgScore: "desc" }, { mlRatingCount: "desc" }],
+      take: 8,
+    }),
+  ]);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
@@ -188,6 +200,30 @@ export default async function MovieDetailPage({ params }: PageProps) {
           <RatingsList ratings={movie.ratings as Rating[]} />
         </div>
       </div>
+
+      {/* Similar titles */}
+      {similar.length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-lg font-semibold text-gray-100 mb-4">More Like This</h2>
+          <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 sm:-mx-0 sm:px-0 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-700">
+            {similar.map((s) => (
+              <div key={s.id} className="w-36 shrink-0">
+                <MovieCard
+                  id={s.id}
+                  title={s.title}
+                  year={s.year}
+                  posterUrl={s.posterUrl}
+                  genres={s.genres}
+                  mlAvgScore={s.mlAvgScore}
+                  contentType={s.contentType}
+                  episodeCount={s.episodeCount}
+                  view="grid"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
