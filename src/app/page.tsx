@@ -3,13 +3,14 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { formatTitle, formatScore } from "@/lib/utils";
 import { MotionDiv } from "@/components/ui/Motion";
-import { HeroSearch } from "@/components/movies/HeroSearch";
+import { HeroRotator } from "@/components/movies/HeroRotator";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "MyMoviePal — Discover Movies & Anime" };
 
 async function fetchFeatured() {
-  const [topAnime, topMovies, recentMovie] = await Promise.all([
+  const randomSkip = Math.floor(Math.random() * 500);
+  const [topAnime, topMovies, heroPool] = await Promise.all([
     prisma.movie.findMany({
       where: { contentType: "anime", mlAvgScore: { not: null }, mlRatingCount: { gt: 50 }, posterUrl: { not: null } },
       orderBy: { mlRatingCount: "desc" },
@@ -22,13 +23,15 @@ async function fetchFeatured() {
       take: 4,
       select: { id: true, title: true, year: true, posterUrl: true, mlAvgScore: true, genres: true, mlRatingCount: true },
     }),
-    prisma.movie.findFirst({
-      where: { contentType: "movie", mlAvgScore: { not: null }, mlRatingCount: { gt: 0 }, posterUrl: { not: null } },
-      orderBy: { year: "desc" },
-      select: { id: true, title: true, year: true, posterUrl: true, mlAvgScore: true, genres: true },
+    prisma.movie.findMany({
+      where: { overview: { not: "" }, posterUrl: { not: null }, mlRatingCount: { gt: 100 } },
+      orderBy: { mlRatingCount: "desc" },
+      skip: randomSkip,
+      take: 10,
+      select: { id: true, title: true, overview: true, posterUrl: true, contentType: true, genres: true, year: true },
     }),
   ]);
-  return { topAnime, topMovies, recentMovie };
+  return { topAnime, topMovies, heroPool };
 }
 
 function fmtCount(n: number | null): string {
@@ -39,63 +42,13 @@ function fmtCount(n: number | null): string {
 }
 
 export default async function HomePage() {
-  const { topAnime, topMovies, recentMovie } = await fetchFeatured();
-  const heroItem = recentMovie ?? topMovies[0] ?? topAnime[0] ?? null;
+  const { topAnime, topMovies, heroPool } = await fetchFeatured();
 
   return (
     <div className="min-h-screen bg-gray-950">
 
       {/* ── HERO ── */}
-      <div className="relative h-[85vh] min-h-[580px] overflow-hidden">
-        {heroItem?.posterUrl && (
-          <Image src={heroItem.posterUrl.replace("/t/p/w500", "/t/p/w1280")} alt="" fill priority sizes="100vw" className="object-cover scale-105 blur-sm" />
-        )}
-        {/* Dark vignette overlays */}
-        <div className="absolute inset-0 bg-gray-950/60" />
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/20 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-950/60 via-transparent to-transparent" />
-
-        <div className="relative z-10 flex flex-col justify-end h-full pb-16 px-4 sm:px-6 max-w-7xl mx-auto">
-          <MotionDiv initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: "easeOut" }}>
-
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-black/40 backdrop-blur-sm mb-6">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              <span className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400">87,000+ Titles Available</span>
-            </div>
-
-            <h1 className="text-6xl sm:text-7xl font-black uppercase leading-[0.95] tracking-tight mb-5 max-w-3xl">
-              <span className="text-white block">MOVIES &amp;</span>
-              <span className="text-amber-400 block">ANIME,</span>
-              <span className="text-white block">ONE PLACE.</span>
-            </h1>
-
-            <p className="text-gray-300 text-lg mb-8 max-w-lg leading-relaxed">
-              Browse 87,000+ movies and 10,000+ anime. Rate, review, and discover what to watch next — all free.
-            </p>
-
-            <HeroSearch />
-
-            <div className="flex flex-wrap gap-3 mb-10">
-              <Link href="/movies" className="px-7 py-3 bg-amber-500 text-black font-black uppercase tracking-wider text-sm hover:bg-amber-400 transition-colors">
-                BROWSE FREE →
-              </Link>
-              <Link href="/movies?sort=rating" className="px-7 py-3 border border-white/30 text-white font-bold uppercase tracking-wider text-sm hover:border-amber-500 hover:text-amber-400 transition-colors backdrop-blur-sm">
-                TOP RATED
-              </Link>
-            </div>
-
-            <div className="flex gap-8">
-              {[["87K+", "MOVIES"], ["10K+", "ANIME"], ["FREE", "FOREVER"]].map(([num, label]) => (
-                <div key={label}>
-                  <p className="text-2xl font-black text-white">{num}</p>
-                  <p className="text-xs font-bold uppercase tracking-[0.15em] text-gray-400 mt-0.5">{label}</p>
-                </div>
-              ))}
-            </div>
-
-          </MotionDiv>
-        </div>
-      </div>
+      <HeroRotator items={heroPool} />
 
       {/* ── TOP ANIME CONTENT ── */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16">
