@@ -11,17 +11,18 @@ export const metadata: Metadata = { title: "MyMoviePal — Discover Movies & Ani
 async function fetchFeatured() {
   const movieSkip = Math.floor(Math.random() * 300);
   const animeSkip = Math.floor(Math.random() * 200);
-  const [topAnime, topMovies, heroMovies, heroAnime] = await Promise.all([
+  const currentYear = new Date().getFullYear();
+  const [animePool, moviePool, heroMovies, heroAnime] = await Promise.all([
     prisma.movie.findMany({
-      where: { contentType: "anime", mlAvgScore: { not: null }, mlRatingCount: { gt: 50 }, posterUrl: { not: null } },
-      orderBy: { mlRatingCount: "desc" },
-      take: 4,
+      where: { contentType: "anime", mlAvgScore: { not: null }, mlRatingCount: { gt: 50 }, posterUrl: { not: null }, year: { gte: currentYear - 1 } },
+      orderBy: { mlAvgScore: "desc" },
+      take: 20,
       select: { id: true, title: true, year: true, posterUrl: true, mlAvgScore: true, genres: true, mlRatingCount: true },
     }),
     prisma.movie.findMany({
-      where: { contentType: "movie", mlAvgScore: { not: null }, mlRatingCount: { gt: 50 }, posterUrl: { not: null }, year: { gte: 2022 } },
+      where: { contentType: "movie", mlAvgScore: { not: null }, mlRatingCount: { gt: 50 }, posterUrl: { not: null }, year: { gte: currentYear - 1 } },
       orderBy: { mlAvgScore: "desc" },
-      take: 4,
+      take: 20,
       select: { id: true, title: true, year: true, posterUrl: true, mlAvgScore: true, genres: true, mlRatingCount: true },
     }),
     prisma.movie.findMany({
@@ -39,6 +40,9 @@ async function fetchFeatured() {
       select: { id: true, title: true, overview: true, posterUrl: true, bannerImage: true, contentType: true, genres: true, year: true },
     }),
   ]);
+  // Shuffle pools and take 4 so each page load shows a different set
+  const topAnime = animePool.sort(() => Math.random() - 0.5).slice(0, 4);
+  const topMovies = moviePool.sort(() => Math.random() - 0.5).slice(0, 4);
   // Interleave movies and anime so the rotator alternates between both
   const heroPool = heroMovies.flatMap((m, i) => (heroAnime[i] ? [m, heroAnime[i]] : [m]));
   return { topAnime, topMovies, heroPool };
@@ -64,11 +68,10 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-400 mb-1">Featured</p>
             <h2 className="text-3xl font-black uppercase tracking-tight">
               <span className="text-white">TOP </span>
               <span className="text-amber-400">ANIME</span>
-              <span className="text-white"> CONTENT</span>
+              <span className="text-white"> THIS YEAR</span>
             </h2>
           </div>
           <Link href="/movies?type=anime" className="px-5 py-2.5 border border-gray-700 text-sm font-bold uppercase tracking-wider text-gray-300 hover:border-amber-500 hover:text-amber-400 transition-colors">
@@ -88,11 +91,10 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-16">
         <div className="flex items-end justify-between mb-8">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-500 mb-1">Recent Hits</p>
             <h2 className="text-3xl font-black uppercase tracking-tight">
               <span className="text-white">TOP </span>
-              <span className="text-amber-400">MOVIE</span>
-              <span className="text-white"> CONTENT</span>
+              <span className="text-amber-400">MOVIES</span>
+              <span className="text-white"> THIS YEAR</span>
             </h2>
           </div>
           <Link href="/movies?type=movie" className="px-5 py-2.5 border border-gray-700 text-sm font-bold uppercase tracking-wider text-gray-300 hover:border-amber-500 hover:text-amber-400 transition-colors">
