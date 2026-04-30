@@ -48,7 +48,7 @@ export function HeroRotator({ items }: { items: HeroItem[] }) {
       onMouseEnter={stop}
       onMouseLeave={start}
     >
-      {/* Background poster crossfade */}
+      {/* Background poster crossfade — anchored right so portrait posters show naturally */}
       {items.map((it, i) =>
         it.posterUrl ? (
           <Image
@@ -58,17 +58,17 @@ export function HeroRotator({ items }: { items: HeroItem[] }) {
             fill
             priority={i === 0}
             sizes="100vw"
-            className={`object-cover scale-105 blur-sm transition-opacity duration-1000 motion-reduce:transition-none ${
+            className={`object-cover object-right-top transition-opacity duration-1000 motion-reduce:transition-none ${
               i === idx ? "opacity-100" : "opacity-0"
             }`}
           />
         ) : null
       )}
 
-      {/* Dark overlays */}
-      <div className="absolute inset-0 bg-gray-950/60" />
-      <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/20 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-r from-gray-950/70 via-transparent to-transparent" />
+      {/* Dark overlays — heavy left coverage keeps text readable, right shows poster art */}
+      <div className="absolute inset-0 bg-gradient-to-r from-gray-950 from-30% via-gray-950/80 via-55% to-gray-950/20" />
+      <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/30 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-950/50 via-transparent to-transparent" />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col justify-end h-full pb-10 px-4 sm:px-6 max-w-7xl mx-auto">

@@ -9,8 +9,9 @@ import type { Metadata } from "next";
 export const metadata: Metadata = { title: "MyMoviePal — Discover Movies & Anime" };
 
 async function fetchFeatured() {
-  const randomSkip = Math.floor(Math.random() * 500);
-  const [topAnime, topMovies, heroPool] = await Promise.all([
+  const movieSkip = Math.floor(Math.random() * 300);
+  const animeSkip = Math.floor(Math.random() * 200);
+  const [topAnime, topMovies, heroMovies, heroAnime] = await Promise.all([
     prisma.movie.findMany({
       where: { contentType: "anime", mlAvgScore: { not: null }, mlRatingCount: { gt: 50 }, posterUrl: { not: null } },
       orderBy: { mlRatingCount: "desc" },
@@ -24,13 +25,22 @@ async function fetchFeatured() {
       select: { id: true, title: true, year: true, posterUrl: true, mlAvgScore: true, genres: true, mlRatingCount: true },
     }),
     prisma.movie.findMany({
-      where: { overview: { not: "" }, posterUrl: { not: null }, mlRatingCount: { gt: 100 } },
+      where: { contentType: "movie", overview: { not: "" }, posterUrl: { not: null }, mlRatingCount: { gt: 100 } },
       orderBy: { mlRatingCount: "desc" },
-      skip: randomSkip,
-      take: 10,
+      skip: movieSkip,
+      take: 5,
+      select: { id: true, title: true, overview: true, posterUrl: true, contentType: true, genres: true, year: true },
+    }),
+    prisma.movie.findMany({
+      where: { contentType: "anime", overview: { not: "" }, posterUrl: { not: null }, mlRatingCount: { gt: 100 } },
+      orderBy: { mlRatingCount: "desc" },
+      skip: animeSkip,
+      take: 5,
       select: { id: true, title: true, overview: true, posterUrl: true, contentType: true, genres: true, year: true },
     }),
   ]);
+  // Interleave movies and anime so the rotator alternates between both
+  const heroPool = heroMovies.flatMap((m, i) => (heroAnime[i] ? [m, heroAnime[i]] : [m]));
   return { topAnime, topMovies, heroPool };
 }
 
