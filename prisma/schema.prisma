@@ -65,12 +65,28 @@ model Movie {
   createdAt       DateTime @default(now())
 
   ratings   Rating[]
+  episodes  Episode[]
   watchlist Watchlist[]
 
   @@index([title])
   @@index([year])
   @@index([mlMovieId])
   @@map("movies")
+}
+
+model Episode {
+  id        String    @id @default(cuid())
+  number    Int
+  title     String?
+  thumbnail String?
+  airDate   DateTime?
+
+  animeId   String
+  anime     Movie     @relation(fields: [animeId], references: [id], onDelete: Cascade)
+
+  @@unique([animeId, number])
+  @@index([animeId])
+  @@map("episodes")
 }
 
 model Watchlist {
