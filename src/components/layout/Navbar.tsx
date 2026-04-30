@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { SearchAutocomplete } from "@/components/movies/SearchAutocomplete";
+import { useState, useEffect, useRef } from "react";
 
 const navLinkClass =
   "relative px-3 py-2 text-xs font-bold uppercase tracking-widest text-gray-400 transition-colors duration-200 hover:text-white group cursor-pointer";
@@ -74,41 +72,6 @@ function BrowseMenu() {
   );
 }
 
-function NavSearch() {
-  const router = useRouter();
-  const queryRef = useRef("");
-
-  const navigate = useCallback(() => {
-    if (queryRef.current) router.push(`/movies?q=${encodeURIComponent(queryRef.current)}`);
-    else router.push("/movies");
-  }, [router]);
-
-  return (
-    <div className="hidden sm:flex items-center w-56">
-      <SearchAutocomplete
-        onSearch={(q) => { queryRef.current = q; }}
-        onSubmit={navigate}
-      />
-      <button
-        type="button"
-        onClick={navigate}
-        aria-label="Search"
-        className="h-11 px-3 bg-amber-500 text-black hover:bg-amber-400 transition-colors shrink-0 flex items-center"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
-        </svg>
-      </button>
-    </div>
-  );
-}
 
 export function Navbar() {
   const { data: session } = useSession();
