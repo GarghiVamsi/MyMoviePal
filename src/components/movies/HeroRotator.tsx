@@ -11,6 +11,7 @@ type HeroItem = {
   title: string;
   overview: string;
   posterUrl: string | null;
+  bannerImage: string | null;
   contentType: string;
   genres: string[];
   year: number | null;
@@ -37,6 +38,18 @@ export function HeroRotator({ items }: { items: HeroItem[] }) {
     return stop;
   }, [start, stop]);
 
+  const prev = useCallback(() => {
+    stop();
+    setIdx((i) => (i - 1 + items.length) % items.length);
+    start();
+  }, [stop, start, items.length]);
+
+  const next = useCallback(() => {
+    stop();
+    setIdx((i) => (i + 1) % items.length);
+    start();
+  }, [stop, start, items.length]);
+
   if (!items.length) return null;
 
   const item = items[idx];
@@ -49,26 +62,54 @@ export function HeroRotator({ items }: { items: HeroItem[] }) {
       onMouseLeave={start}
     >
       {/* Background poster crossfade — anchored right so portrait posters show naturally */}
-      {items.map((it, i) =>
-        it.posterUrl ? (
+      {items.map((it, i) => {
+        const heroSrc = it.bannerImage ?? it.posterUrl;
+        if (!heroSrc) return null;
+        const src = heroSrc.replace("/t/p/w500", "/t/p/w1280");
+        const isBanner = !!it.bannerImage;
+        return (
           <Image
             key={it.id}
-            src={it.posterUrl.replace("/t/p/w500", "/t/p/w1280")}
+            src={src}
             alt=""
             fill
             priority={i === 0}
             sizes="100vw"
-            className={`object-cover object-right-top transition-opacity duration-1000 motion-reduce:transition-none ${
-              i === idx ? "opacity-100" : "opacity-0"
-            }`}
+            className={`object-cover transition-opacity duration-1000 motion-reduce:transition-none ${
+              isBanner ? "object-center" : it.contentType === "anime" ? "object-center" : "object-right-top"
+            } ${i === idx ? "opacity-100" : "opacity-0"}`}
           />
-        ) : null
-      )}
+        );
+      })}
 
       {/* Dark overlays — heavy left coverage keeps text readable, right shows poster art */}
-      <div className="absolute inset-0 bg-gradient-to-r from-gray-950 from-30% via-gray-950/80 via-55% to-gray-950/20" />
+      <div className="absolute inset-0 bg-gradient-to-r from-gray-950 from-20% via-gray-950/70 via-40% to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/30 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-b from-gray-950/50 via-transparent to-transparent" />
+
+      {/* Left / right nav arrows */}
+      {items.length > 1 && (
+        <>
+          <button
+            onClick={prev}
+            aria-label="Previous"
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-black/40 border border-white/20 text-white backdrop-blur-sm hover:bg-black/70 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            onClick={next}
+            aria-label="Next"
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-black/40 border border-white/20 text-white backdrop-blur-sm hover:bg-black/70 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </>
+      )}
 
       {/* Content */}
       <div className="relative z-10 flex flex-col justify-end h-full pb-10 px-4 sm:px-6 max-w-7xl mx-auto">

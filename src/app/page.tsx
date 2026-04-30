@@ -29,14 +29,14 @@ async function fetchFeatured() {
       orderBy: { mlRatingCount: "desc" },
       skip: movieSkip,
       take: 5,
-      select: { id: true, title: true, overview: true, posterUrl: true, contentType: true, genres: true, year: true },
+      select: { id: true, title: true, overview: true, posterUrl: true, bannerImage: true, contentType: true, genres: true, year: true },
     }),
     prisma.movie.findMany({
       where: { contentType: "anime", overview: { not: "" }, posterUrl: { not: null }, mlRatingCount: { gt: 100 } },
       orderBy: { mlRatingCount: "desc" },
       skip: animeSkip,
       take: 5,
-      select: { id: true, title: true, overview: true, posterUrl: true, contentType: true, genres: true, year: true },
+      select: { id: true, title: true, overview: true, posterUrl: true, bannerImage: true, contentType: true, genres: true, year: true },
     }),
   ]);
   // Interleave movies and anime so the rotator alternates between both

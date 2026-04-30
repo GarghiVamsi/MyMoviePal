@@ -139,9 +139,6 @@ export function Navbar() {
           <span className="text-white">MyMovie<span className="text-amber-400">Pal</span></span>
         </Link>
 
-        {/* Search bar (desktop) */}
-        <NavSearch />
-
         {/* Desktop nav */}
         <nav className="hidden sm:flex items-center gap-1">
           <BrowseMenu />
