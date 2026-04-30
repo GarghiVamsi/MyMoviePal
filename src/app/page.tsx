@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { formatTitle, formatScore } from "@/lib/utils";
 import { MotionDiv } from "@/components/ui/Motion";
 import { HeroRotator } from "@/components/movies/HeroRotator";
+import { ContactButton } from "@/components/ui/ContactButton";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "MyMoviePal — Discover Movies & Anime" };
@@ -143,39 +144,32 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── BROWSE CTAs ── */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-          <BrowseCard
-            href="/movies?type=movie"
-            label="87,000+ Films"
-            title="MOVIES"
-            description="From classics to blockbusters. Filter by genre, year, and rating."
-            accentFrom="from-amber-600"
-            accentTo="to-orange-700"
-            icon={
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-              </svg>
-            }
-          />
-        </MotionDiv>
-        <MotionDiv initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-          <BrowseCard
-            href="/movies?type=anime"
-            label="10,000+ Series"
-            title="ANIME"
-            description="Discover series and films. Find your next obsession."
-            accentFrom="from-violet-600"
-            accentTo="to-purple-700"
-            icon={
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-              </svg>
-            }
-          />
-        </MotionDiv>
-      </section>
+      {/* ── FOOTER ── */}
+      <footer className="border-t border-gray-800 bg-gray-900/40">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 flex flex-col gap-4">
+          {/* Top row */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Nav links */}
+            <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <Link href="/movies" className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors">Browse</Link>
+              <Link href="/movies?type=movie" className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors">Movies</Link>
+              <Link href="/movies?type=anime" className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors">Anime</Link>
+              <Link href="/watchlist" className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors">Watchlist</Link>
+              <Link href="/profile" className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-colors">My Ratings</Link>
+            </nav>
+            {/* Contact button */}
+            <ContactButton team={TEAM} />
+          </div>
+          {/* Bottom row */}
+          <p className="text-xs text-gray-600">
+            © {new Date().getFullYear()} MyMoviePal. Built by{" "}
+            <a href={TEAM[0].github} target="_blank" rel="noopener noreferrer" className="hover:text-gray-400 transition-colors underline underline-offset-2">Vamsi Garghi</a>
+            {" & "}
+            <a href={TEAM[1].github} target="_blank" rel="noopener noreferrer" className="hover:text-gray-400 transition-colors underline underline-offset-2">Ahmed Mohammed</a>
+            .
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
@@ -271,29 +265,19 @@ function CommunityReviewCard({ review: r }: { review: ReviewEntry }) {
   );
 }
 
-// ── Browse CTA Card ────────────────────────────────────────────────────────
+// ── Team ───────────────────────────────────────────────────────────────────
 
-function BrowseCard({ href, label, title, description, accentFrom, accentTo, icon }: {
-  href: string; label: string; title: string; description: string;
-  accentFrom: string; accentTo: string; icon: React.ReactNode;
-}) {
-  return (
-    <Link href={href} className="group relative flex flex-col justify-between rounded-2xl overflow-hidden border border-gray-800 bg-gray-900 p-8 hover:border-gray-600 transition-all duration-300 min-h-[200px] cursor-pointer">
-      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${accentFrom} ${accentTo}`} />
-      <div>
-        <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br ${accentFrom} ${accentTo} text-white mb-4 shadow-lg`}>
-          {icon}
-        </div>
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mb-1">{label}</p>
-        <h3 className="text-2xl font-black uppercase tracking-tight text-white mb-2 group-hover:text-amber-300 transition-colors">{title}</h3>
-        <p className="text-sm text-gray-400 leading-relaxed">{description}</p>
-      </div>
-      <div className="mt-6 flex items-center gap-2 text-sm font-black uppercase tracking-wider text-gray-300 group-hover:text-white transition-colors">
-        EXPLORE NOW
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-        </svg>
-      </div>
-    </Link>
-  );
-}
+const TEAM = [
+  {
+    name: "Vamsi Garghi",
+    github: "https://github.com/GarghiVamsi",
+    linkedin: "https://www.linkedin.com/in/vamsigarghi/",
+    email: "garghivamsi@gmail.com",
+  },
+  {
+    name: "Ahmed Mohammed",
+    github: "https://github.com/ahmed-mohammed32",
+    linkedin: "https://www.linkedin.com/in/ahmed-mohammed-158b07131/",
+    email: "ahmedmoha3256@gmail.com",
+  },
+];
