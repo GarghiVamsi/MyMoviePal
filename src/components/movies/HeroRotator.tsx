@@ -23,9 +23,10 @@ export function HeroRotator({ items }: { items: HeroItem[] }) {
 
   const start = useCallback(() => {
     if (items.length <= 1) return;
+    if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(
       () => setIdx((i) => (i + 1) % items.length),
-      10_000
+      5_000
     );
   }, [items.length]);
 

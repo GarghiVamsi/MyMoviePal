@@ -68,7 +68,7 @@ async function MovieResults({ searchParams }: PageProps) {
         sqlParams.push(`(^|\\s)${qLower}`);
         orderBySql = `ORDER BY CASE WHEN LOWER(title) LIKE $${startsWithIdx} THEN 0 WHEN LOWER(title) ~ $${wordBoundaryIdx} THEN 1 ELSE 2 END ASC, "mlRatingCount" DESC NULLS LAST`;
       } else {
-        orderBySql = `ORDER BY RANDOM()`;
+        orderBySql = `ORDER BY "mlRatingCount" DESC NULLS LAST`;
       }
     } else if (sort === "rating") {
       orderBySql = `ORDER BY ("mlRatingCount" * "mlAvgScore" + 1000 * 7.0) / ("mlRatingCount" + 1000.0) DESC`;
