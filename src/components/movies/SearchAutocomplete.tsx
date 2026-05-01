@@ -26,6 +26,7 @@ export function SearchAutocomplete({ defaultValue = "", onSearch, onSubmit }: Pr
   const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -67,6 +68,7 @@ export function SearchAutocomplete({ defaultValue = "", onSearch, onSubmit }: Pr
         setOpen(false);
       } else {
         setOpen(false);
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
         if (onSubmit) onSubmit(query);
         else onSearch(query);
       }
@@ -81,7 +83,12 @@ export function SearchAutocomplete({ defaultValue = "", onSearch, onSubmit }: Pr
         type="text"
         placeholder="Search movies & anime..."
         value={query}
-        onChange={(e) => { setQuery(e.target.value); onSearch(e.target.value); }}
+        onChange={(e) => {
+          const val = e.target.value;
+          setQuery(val);
+          if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+          searchDebounceRef.current = setTimeout(() => onSearch(val), 300);
+        }}
         onKeyDown={handleKeyDown}
         onFocus={() => suggestions.length > 0 && setOpen(true)}
         className="h-11 w-full rounded-lg border border-gray-700 bg-gray-800 px-3 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
