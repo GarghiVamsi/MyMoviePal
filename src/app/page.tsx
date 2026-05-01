@@ -7,6 +7,7 @@ import { HeroRotator } from "@/components/movies/HeroRotator";
 import { ContactButton } from "@/components/ui/ContactButton";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "MyMoviePal — Discover Movies & Anime" };
 
 async function fetchFeatured() {
