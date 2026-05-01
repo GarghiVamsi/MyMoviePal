@@ -72,6 +72,20 @@ interface AniListResponse {
   errors?: { message: string }[];
 }
 
+function stripHtml(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -160,7 +174,7 @@ async function main() {
       const genres = mapGenres(anime.genres);
       const posterUrl = anime.coverImage.large ?? null;
       const bannerImage = anime.bannerImage ?? null;
-      const overview = anime.description ?? "";
+      const overview = anime.description ? stripHtml(anime.description) : "";
 
       const isNew = !existingIds.has(anime.id);
 

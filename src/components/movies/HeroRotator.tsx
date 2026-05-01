@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { formatTitle } from "@/lib/utils";
+import { formatTitle, stripHtml } from "@/lib/utils";
 
 type HeroItem = {
   id: string;
@@ -163,7 +163,7 @@ export function HeroRotator({ items }: { items: HeroItem[] }) {
             {/* Overview */}
             {item.overview && (
               <p className="text-gray-300 text-base mb-6 max-w-xl leading-relaxed line-clamp-3">
-                {item.overview}
+                {stripHtml(item.overview)}
               </p>
             )}
 
