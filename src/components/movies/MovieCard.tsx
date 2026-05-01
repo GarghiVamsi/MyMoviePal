@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
-import { formatScore, formatTitle } from "@/lib/utils";
+import { formatScore, formatTitle, stripHtml } from "@/lib/utils";
 
 interface MovieCardProps {
   id: string;
@@ -93,7 +93,7 @@ export function MovieCard({
               {genres.slice(0, 3).map((g) => <Badge key={g}>{g}</Badge>)}
             </div>
             {overview && (
-              <p className="text-sm text-gray-400 line-clamp-3 leading-relaxed">{overview}</p>
+              <p className="text-sm text-gray-400 line-clamp-3 leading-relaxed">{stripHtml(overview)}</p>
             )}
           </div>
 
