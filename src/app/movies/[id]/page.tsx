@@ -10,7 +10,7 @@ import { RatingForm } from "@/components/movies/RatingForm";
 import { RatingsList } from "@/components/movies/RatingsList";
 import { MovieCard } from "@/components/movies/MovieCard";
 import { Rating } from "@/types";
-import { formatRuntime, formatScore, formatTitle } from "@/lib/utils";
+import { formatRuntime, formatScore, formatTitle, stripHtml } from "@/lib/utils";
 import { WatchlistButton } from "@/components/movies/WatchlistButton";
 import { EpisodesSection } from "@/components/movies/EpisodesSection";
 import type { Metadata } from "next";
@@ -157,7 +157,7 @@ export default async function MovieDetailPage({ params }: PageProps) {
           <WatchlistButton movieId={movie.id} initialSaved={isWatchlisted} />
 
           {movie.overview && (
-            <p className="text-gray-400 leading-relaxed text-sm">{movie.overview}</p>
+            <p className="text-gray-400 leading-relaxed text-sm" style={{ whiteSpace: "pre-line" }}>{stripHtml(movie.overview)}</p>
           )}
 
           {movie.cast.length > 0 && (
