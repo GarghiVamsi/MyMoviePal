@@ -17,6 +17,45 @@ type HeroItem = {
   year: number | null;
 };
 
+const PHRASE_CHARS = [
+  { text: "Never wonder what to ", cls: "" },
+  { text: "watch", cls: "not-italic font-black text-amber-400" },
+  { text: " again.", cls: "" },
+].flatMap(({ text, cls }) => text.split("").map((char) => ({ char, cls })));
+
+function Catchphrase() {
+  const [count, setCount] = useState(0);
+  const [cursorOn, setCursorOn] = useState(true);
+  const done = count >= PHRASE_CHARS.length;
+
+  useEffect(() => {
+    if (done) {
+      const t = setTimeout(() => setCursorOn(false), 1600);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => setCount((c) => c + 1), count === 0 ? 400 : 45);
+    return () => clearTimeout(t);
+  }, [count, done]);
+
+  return (
+    <div className="absolute top-8 inset-x-0 z-10 px-4 sm:px-6 max-w-7xl mx-auto pointer-events-none">
+      <p className="text-base sm:text-lg italic tracking-wide text-white/75">
+        {PHRASE_CHARS.slice(0, count).map(({ char, cls }, i) => (
+          <span key={i} className={cls}>{char}</span>
+        ))}
+        {cursorOn && (
+          <motion.span
+            aria-hidden
+            className="inline-block w-[2px] h-[1em] align-middle bg-amber-400 ml-0.5"
+            animate={done ? { opacity: [1, 0, 1, 0] } : { opacity: 1 }}
+            transition={done ? { duration: 1.6, times: [0, 0.25, 0.75, 1] } : { duration: 0 }}
+          />
+        )}
+      </p>
+    </div>
+  );
+}
+
 export function HeroRotator({ items }: { items: HeroItem[] }) {
   const [idx, setIdx] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -87,6 +126,9 @@ export function HeroRotator({ items }: { items: HeroItem[] }) {
       <div className="absolute inset-0 bg-gradient-to-r from-gray-950 from-20% via-gray-950/70 via-40% to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/30 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-b from-gray-950/50 via-transparent to-transparent" />
+
+      {/* Catchphrase — typewriter */}
+      <Catchphrase />
 
       {/* Left / right nav arrows */}
       {items.length > 1 && (
