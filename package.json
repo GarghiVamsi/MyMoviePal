@@ -10,7 +10,8 @@
     "fetch-posters": "ts-node --project tsconfig.node.json scripts/fetch-posters.ts",
     "import-tmdb-ids": "ts-node --project tsconfig.node.json scripts/import-tmdb-ids.ts",
     "fetch-recent-movies": "ts-node --project tsconfig.node.json scripts/fetch-recent-movies.ts",
-    "import-anime": "ts-node --project tsconfig.node.json scripts/import-anime.ts"
+    "import-anime": "ts-node --project tsconfig.node.json scripts/import-anime.ts",
+    "fill-episode-thumbnails": "ts-node --project tsconfig.node.json scripts/fill-episode-thumbnails.ts"
   },
   "prisma": {
     "seed": "ts-node --project tsconfig.node.json prisma/seed.ts"
