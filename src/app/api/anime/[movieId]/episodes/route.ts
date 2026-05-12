@@ -118,14 +118,32 @@ async function fetchAndStoreEpisodes(
       }
     }
 
-    // episode number → title + thumbnail (only from allowed host)
+    // Collect all allowed thumbnail URLs from this fetch
+    const candidateThumbnails = new Set<string>();
+    for (const ep of media.streamingEpisodes) {
+      if (isThumbnailAllowed(ep.thumbnail)) candidateThumbnails.add(ep.thumbnail);
+    }
+
+    // Any thumbnail already stored for a *different* anime is a cross-season
+    // duplicate leaked by AniList's streamingEpisodes — exclude it.
+    const takenRows = candidateThumbnails.size > 0
+      ? await prisma.episode.findMany({
+          where: { thumbnail: { in: Array.from(candidateThumbnails) }, animeId: { not: animeId } },
+          select: { thumbnail: true },
+          distinct: ["thumbnail"],
+        })
+      : [];
+    const takenThumbnails = new Set(takenRows.map((r) => r.thumbnail as string));
+
+    // episode number → title + thumbnail (only from allowed host, not a cross-season dupe)
     const streamingByNum = new Map<number, { title: string; thumbnail: string | null }>();
     for (const ep of media.streamingEpisodes) {
       const num = parseEpisodeNumber(ep.title);
       if (num && num <= count) {
+        const allowed = isThumbnailAllowed(ep.thumbnail) && !takenThumbnails.has(ep.thumbnail);
         streamingByNum.set(num, {
           title: ep.title,
-          thumbnail: isThumbnailAllowed(ep.thumbnail) ? ep.thumbnail : null,
+          thumbnail: allowed ? ep.thumbnail : null,
         });
       }
     }
