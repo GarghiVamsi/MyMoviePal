@@ -10,6 +10,8 @@ const ANILIST_TIMEOUT_MS = 10_000;
 const ALLOWED_THUMBNAIL_HOSTS = new Set([
   "s4.anilist.co",
   "img1.ak.crunchyroll.com",
+  "media.kitsu.io",
+  "image.tmdb.org",
 ]);
 
 const anilistSchema = z.object({
